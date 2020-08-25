@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "adm-zip": "^0.4.16",
+    "aria2": "^4.1.0",
     "async": "^3.2.0",
     "cheerio": "^1.0.0-rc.3",
     "https-proxy-agent": "^5.0.0",

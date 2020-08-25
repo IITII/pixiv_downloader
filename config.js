@@ -8,7 +8,20 @@ module.exports = {
     // if enabled, we will add download task to aria2 via rpc
     // after zipped all images of a day
     aria2Enable: false,
-    aria2: {},
+    aria2: {
+      href: "https://github.com/",
+      "rpc": {
+        "host": "localhost",
+        "port": 6800,
+        "secure": false,
+        "secret": "1",
+        "path": "/jsonrpc"
+      },
+      "config": {
+        "pause-metadata": "true",
+        "dir": null,
+      }
+    },
     // download image concurrency limit
     limit: 10,
     // Download proxy, for example: http://localhost:1080
