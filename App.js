@@ -244,6 +244,7 @@ async function downImg(imgSrc, callback) {
     })
     .finally(callback);
 }
+
 /**
  * only compress dir under given `dirname`
  * @param dirName compress dirname
@@ -271,6 +272,7 @@ async function zipDir(dirName, zipFileName) {
     }
   })
 }
+
 async function saveImg(data, IMG_TMP_DIR, useragent) {
   User_Agent = useragent;
   mkdir(IMG_TMP_DIR, () => {
@@ -284,7 +286,7 @@ async function saveImg(data, IMG_TMP_DIR, useragent) {
       })
       .then(() => {
         logger.info(`Compressing files...`);
-        let zipPath = path.resolve(IMG_TMP_DIR, '.zip');
+        let zipPath = path.resolve(IMG_TMP_DIR) + '.zip';
         zipDir(IMG_TMP_DIR, zipPath)
           .then(() => {
             logger.info(`Compress completed!!! Save to ${zipPath}`);
@@ -381,6 +383,6 @@ async function main() {
 main().then(() => {
   logger.info(`Success!!!`)
 })
-.then(()=>{
-  //Aria2
-})
+  .then(() => {
+    //Aria2
+  })
