@@ -20,10 +20,10 @@
 module.exports = {
   apps: [{
     name: "PIXIV_DOWNLOADER",
-    script: 'index.js',
+    script: 'App.js',
     watch: '.',
     instance: 1,
-    cron_restart: "* * * * *",
+    cron_restart: "30 0 * * *",
     autorestart: false,
     env: {
       "NODE_ENV": "development",
