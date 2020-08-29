@@ -4,7 +4,7 @@
   "description": "",
   "main": "App.js",
   "scripts": {
-    "start": "node App.js",
+    "start": "node --max-http-header-size 80000 App.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

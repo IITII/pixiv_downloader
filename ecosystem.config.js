@@ -1,6 +1,6 @@
 /**
  pm2 deploy <configuration_file> <environment> <command>
- 
+
  Commands:
  setup                run remote setup commands
  update               update deploy to the latest release
@@ -25,6 +25,7 @@ module.exports = {
     instance: 1,
     cron_restart: "30 0 * * *",
     autorestart: false,
+    args: '--max-http-header-size 80000',
     env: {
       "NODE_ENV": "development",
     },
@@ -32,7 +33,7 @@ module.exports = {
       "NODE_ENV": "production"
     }
   }],
-  
+
   deploy: {
     "production": {
       "user": "root",
