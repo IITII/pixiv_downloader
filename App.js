@@ -381,7 +381,7 @@ async function main() {
     });
   data = _.uniqBy(data, 'url');
   saveImg(data, IMG_DOWNLOAD_DIR, User_Agent)
-    .then(() => {
+    .then(async () => {
       if (isNil(process.env.HWC_ENABLE)) {
         return;
       }
@@ -393,7 +393,7 @@ async function main() {
       if (!baseUrl.match('/$')) {
         baseUrl += '/';
       }
-      let token = getToken();
+      let token = await getToken();
       let preHeatingArray = (() => {
         let tmp = [];
         data.forEach(e => {
