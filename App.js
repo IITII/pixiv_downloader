@@ -31,6 +31,9 @@ const logger = {
   info: function (msg) {
     console.info(`[${moment().format('YYYY-MM-DD HH:mm:ss.SSS')}] ${msg}`);
   },
+  debug: function (msg) {
+    console.debug(`[${moment().format('YYYY-MM-DD HH:mm:ss.SSS')}] ${msg}`);
+  },
   warn: function (msg) {
     console.warn(`[${moment().format('YYYY-MM-DD HH:mm:ss.SSS')}] ${msg}`);
   },
@@ -54,7 +57,7 @@ async function sleep(ms) {
 /**
  * Checks if value is null or undefined or ''.
  * @param object object
- * @return {boolean} true for nil or ''
+ * @return {boolean} true for nil or ""
  */
 function isNil(object) {
   return (object == null) || (object === '');
@@ -85,7 +88,7 @@ async function spendTime(func, ...args) {
 function mkdir(dir, cb) {
   let paths = dir.split(path.sep);
   let index = 1;
-  
+
   function next(index) {
     //递归结束判断
     if (index > paths.length)
@@ -102,7 +105,7 @@ function mkdir(dir, cb) {
       }
     })
   }
-  
+
   next(index);
 }
 
@@ -377,7 +380,51 @@ async function main() {
       logger.error(e);
     });
   data = _.uniqBy(data, 'url');
-  await saveImg(data, IMG_DOWNLOAD_DIR, User_Agent);
+  saveImg(data, IMG_DOWNLOAD_DIR, User_Agent)
+    .then(() => {
+      if (isNil(process.env.HWC_ENABLE)) {
+        return;
+      }
+      let baseUrl = process.env.HWC_BASEURL,
+        {getToken, cdn_preheatingtasks, cdn_refreshtasks} = require('./libs/hwc_api');
+      if (isNil(baseUrl)) {
+        return;
+      }
+      if (!baseUrl.match('/$')) {
+        baseUrl += '/';
+      }
+      let token = getToken();
+      let preHeatingArray = (() => {
+        let tmp = [];
+        data.forEach(e => {
+          tmp.push(baseUrl + date + '/' + path.basename(new URL(e.url).pathname))
+        });
+        return tmp;
+      })()
+      preHeatingArray.push(baseUrl + date + '.zip');
+      let refreshFilesArray = [baseUrl];
+      cdn_refreshtasks(refreshFilesArray, token.x_subject_token)
+        .then(result => {
+          logger.info(`cdn_refreshtasks submit successful`);
+          logger.debug(JSON.stringify(result));
+        })
+        .then(() => {
+          cdn_preheatingtasks(preHeatingArray, token.x_subject_token)
+            .then(result => {
+              logger.info(`cdn_preheatingtasks submit successful`);
+              logger.debug(JSON.stringify(result));
+            })
+            .catch(e => {
+              logger.error(e);
+            })
+        })
+        .catch(e => {
+          logger.error(e);
+        })
+    })
+    .catch(e => {
+      logger.error(e);
+    })
 }
 
 main().then(() => {
@@ -387,34 +434,34 @@ main().then(() => {
     //Aria2
     if (config.save.aria2Enable) {
       const Aria2 = require('aria2'),
-          aria2 = new Aria2(config.save.aria2.rpc);
+        aria2 = new Aria2(config.save.aria2.rpc);
       logger.info('Connecting to Aria2...');
       aria2.open()
-          .then(() => {
-            aria2.call('getVersion')
-                .then(version => {
-                  logger.info(`Aria2 connected successfully: version ${version.version}`);
-                })
-                .then(() => {
-                  let link = config.save.aria2.href + '/' + moment().format('YYYY-DD-MM');
-                  logger.info(`Downloading ${link}...`);
-                  aria2.call('addUri', [link], config.save.aria2.config)
-                      .then(gid => {
-                        logger.info(`Download Task: ${link} add to ${config.save.aria2.rpc.host}!!!`);
-                        logger.info(`Download Task Gid: ${gid}`);
-                      })
-                      .catch(e => {
-                        logger.error(e);
-                      })
+        .then(() => {
+          aria2.call('getVersion')
+            .then(version => {
+              logger.info(`Aria2 connected successfully: version ${version.version}`);
+            })
+            .then(() => {
+              let link = config.save.aria2.href + '/' + moment().format('YYYY-DD-MM');
+              logger.info(`Downloading ${link}...`);
+              aria2.call('addUri', [link], config.save.aria2.config)
+                .then(gid => {
+                  logger.info(`Download Task: ${link} add to ${config.save.aria2.rpc.host}!!!`);
+                  logger.info(`Download Task Gid: ${gid}`);
                 })
                 .catch(e => {
                   logger.error(e);
-                  process.exit(1);
                 })
-          })
-          .catch(e => {
-            logger.error(e);
-            process.exit(1)
-          })
+            })
+            .catch(e => {
+              logger.error(e);
+              process.exit(1);
+            })
+        })
+        .catch(e => {
+          logger.error(e);
+          process.exit(1)
+        })
     }
   })
