@@ -25,7 +25,11 @@ module.exports = {
     instance: 1,
     cron_restart: "30 0 * * *",
     autorestart: false,
-    args: '--max-http-header-size 80000',
+    node_args: '--max-http-header-size 80000',
+    error_file: '/tmp/PIXIV_DL_ERR.log',
+    out_file: '/tmp/PIXIV_DL_OUT.log',
+    log_file: '/tmp/PIXIV_DL.log',
+    time: false,
     env: {
       "NODE_ENV": "development",
     },
