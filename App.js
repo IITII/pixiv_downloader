@@ -309,8 +309,7 @@ async function saveImg(data, IMG_TMP_DIR, useragent) {
 
 async function main() {
   if (isNil(PIXIV_USERNAME) || isNil(PIXIV_PASSWORD)) {
-    logger.error('Empty PIXIV_USERNAME or PIXIV_PASSWORD!!!');
-    process.exit(1);
+    throw new Error('Empty PIXIV_USERNAME or PIXIV_PASSWORD!!!');
   }
   const date = moment().format('YYYY-MM-DD'),
     IMG_DOWNLOAD_DIR = SAVE_DIR + path.sep + date;
@@ -318,12 +317,10 @@ async function main() {
     if (fs.statSync(IMG_DOWNLOAD_DIR).isDirectory()) {
       let files = fs.readdirSync(IMG_DOWNLOAD_DIR);
       if (files.length > 0) {
-        logger.warn(`Exist!!! Dir ${IMG_DOWNLOAD_DIR} is exist and not empty...`);
-        process.exit(1);
+        throw new Error(`Exist!!! Dir ${IMG_DOWNLOAD_DIR} is exist and not empty...`);
       }
     } else {
-      logger.error(`Error!!! A file named ${IMG_DOWNLOAD_DIR}!!!`);
-      process.exit(1);
+      throw new Error(`Error!!! A file named ${IMG_DOWNLOAD_DIR}!!!`);
     }
   } else {
     try {
@@ -331,8 +328,7 @@ async function main() {
         logger.info(`Create un-exist path: ${IMG_DOWNLOAD_DIR}`);
       });
     } catch (e) {
-      logger.error(e);
-      process.exit(1);
+      throw new Error(e);
     }
   }
   const driver = new webdriver.Builder()
@@ -455,13 +451,11 @@ main().then(() => {
                 })
             })
             .catch(e => {
-              logger.error(e);
-              process.exit(1);
+              throw new Error(e);
             })
         })
         .catch(e => {
-          logger.error(e);
-          process.exit(1)
+          throw new Error(e);
         })
     }
   })
