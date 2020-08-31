@@ -27,7 +27,8 @@ const got = require('got'),
     CDN: {
       END_POINT: 'https://cdn.myhwclouds.com',
       preheatingtasks: 'v1.0/cdn/preheatingtasks',
-      refreshtasks: 'v1.0/cdn/refreshtasks'
+      refreshtasks: 'v1.0/cdn/refreshtasks',
+      ShowHistoryTaskDetails: 'v1.0/cdn/historytasks/history_tasks_id/detail',
     }
   };
 
@@ -35,19 +36,19 @@ const got = require('got'),
  * Simple packaging got
  * @param prefixUrl {String | URL} got prefixUrl
  * @param token {String} huaweicloud IAM Token
- * @param json_body POST BODY
+ * @param json_body POST BODY, NULL for GET Method
  * @return {Got} Got instance
  * @see https://github.com/sindresorhus/got
  * <br>
  * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc
  */
-function got_instance(prefixUrl, token, json_body) {
+function got_instance(prefixUrl, token, json_body = null) {
   try {
     new URL(prefixUrl)
   } catch (ERR_INVALID_URL) {
     throw new Error('Invalid prefixUrl!!!');
   }
-  return got.extend({
+  let op = {
     prefixUrl: prefixUrl,
     headers: {
       'content-type': 'application/json;charset=utf8',
@@ -55,7 +56,13 @@ function got_instance(prefixUrl, token, json_body) {
     },
     responseType: "json",
     json: json_body
-  })
+  }
+  // Remove empty param
+  // op = _.pickBy(op,!_.isNil);
+  if (json_body === null) {
+    delete op["json"];
+  }
+  return got.extend(op);
 }
 
 /**
@@ -236,8 +243,101 @@ async function cdn_refreshtasks(array, token, types = "file", instance = null) {
   })
 }
 
+/**
+ * huaweicloud cdn refreshtasks
+ * @param history_tasks_id TaskID
+ * @param token {String} huaweicloud IAM TOKEN
+ * @param instance Got instance, default null
+ * @return {JSON | Error} result
+ * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/mock?product=CDN&api=ShowHistoryTaskDetails
+ */
+async function showHistoryTaskDetails(token, history_tasks_id, instance = null) {
+  return await new Promise((resolve, reject) => {
+    if (_.isNaN(history_tasks_id)) {
+      return reject('Empty history_tasks_id');
+    }
+    instance = instance === null
+      ? instance = got_instance(API.CDN.END_POINT, token)
+      : instance;
+    instance.get(API.CDN.ShowHistoryTaskDetails.replace('history_tasks_id', history_tasks_id))
+      .then(res => {
+        if (res.statusCode === 200) {
+          return resolve({
+            statusCode: res.statusCode,
+            statusMessage: res.statusMessage,
+            body: res.body
+          });
+        } else {
+          return reject({
+            statusCode: res.statusCode,
+            statusMessage: res.statusMessage,
+            body: res.body
+          });
+        }
+      })
+      .catch(e => {
+        return reject(e);
+      });
+  });
+}
+
+/**
+ * wait for refresh task done
+ * @param token {String} huaweicloud IAM TOKEN
+ * @param refreshTaskId {Number} cdn refresh Task ID
+ * @param MAX_TRY Maximum attempts
+ * @param query_break {Number} setTimeout time unit
+ * @param instance  Got instance, default null
+ * @return {Array | Number | Error}
+ * Number for succeed task numbers
+ * <br>
+ * Array for failed task array
+ * <br>
+ * Error for other error
+ */
+async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, query_break = 10 * 1000, instance) {
+  return await new Promise((resolve, reject) => {
+    let try_time = 0;
+    setTimeout(async () => {
+      if (++try_time > MAX_TRY) {
+        return reject('Maximum number of attempts reached!!!');
+      }
+      try {
+        let cdn_detail = await showHistoryTaskDetails(token, refreshTaskId, instance);
+        if (cdn_detail.body.status === 'task_done') {
+          if (cdn_detail.body.succeed === cdn_detail.body.urls.length) {
+            // return if all task is succeed
+            return resolve(cdn_detail.body.succeed)
+          } else {
+            let failedArray = (() => {
+              let urls = cdn_detail.body.urls;
+              let tmp = [];
+              urls.forEach(url => {
+                if (url.status === 'failed') {
+                  tmp.push(url)
+                }
+              });
+              return tmp;
+            })()
+            if (failedArray.length === 0) {
+              return reject('Internal Error!!!');
+            } else {
+              return reject(failedArray);
+            }
+          }
+        }
+      } catch (e) {
+        return reject(e);
+      }
+
+    }, query_break)
+  })
+}
+
 module.exports = {
   getToken,
   cdn_refreshtasks,
-  cdn_preheatingtasks
+  cdn_preheatingtasks,
+  showHistoryTaskDetails,
+  waitForRefreshTaskDone,
 }

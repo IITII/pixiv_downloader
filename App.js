@@ -382,14 +382,14 @@ async function main() {
         return;
       }
       let baseUrl = process.env.HWC_BASEURL,
-        {getToken, cdn_preheatingtasks, cdn_refreshtasks} = require('./libs/hwc_api');
+        hwc_api = require('./libs/hwc_api');
       if (isNil(baseUrl)) {
         return;
       }
       if (!baseUrl.match('/$')) {
         baseUrl += '/';
       }
-      let token = await getToken();
+      let token = await hwc_api.getToken();
       let preHeatingArray = (() => {
         let tmp = [];
         data.forEach(e => {
@@ -399,24 +399,34 @@ async function main() {
       })()
       preHeatingArray.push(baseUrl + date + '.zip');
       let refreshFilesArray = [baseUrl];
-      cdn_refreshtasks(refreshFilesArray, token.x_subject_token)
-        .then(result => {
-          logger.info(`cdn_refreshtasks submit successful`);
-          logger.debug(JSON.stringify(result));
-        })
-        .then(() => {
-          cdn_preheatingtasks(preHeatingArray, token.x_subject_token)
-            .then(result => {
-              logger.info(`cdn_preheatingtasks submit successful`);
-              logger.debug(JSON.stringify(result));
-            })
-            .catch(e => {
-              logger.error(e);
-            })
-        })
-        .catch(e => {
-          logger.error(e);
-        })
+      try {
+        let cdn_refresh = await hwc_api.cdn_refreshtasks(refreshFilesArray, token.x_subject_token);
+        logger.info(`cdn_refreshtasks submit successful`);
+        logger.debug(JSON.stringify(cdn_refresh));
+        let cdn_refresh_detail = await hwc_api.showHistoryTaskDetails(
+          token.x_subject_token,
+          cdn_refresh.body.refreshTask.id
+        );
+        hwc_api.waitForRefreshTaskDone(token.x_subject_token, cdn_refresh_detail.body.id)
+          .then(res => {
+            logger.info(`Refresh Task Run Successful, Total: ${res}`);
+            hwc_api.cdn_preheatingtasks(preHeatingArray, token.x_subject_token)
+              .then(result => {
+                logger.info(`cdn_preheatingtasks submit successful`);
+                logger.debug(JSON.stringify(result));
+              })
+              .catch(e => {
+                logger.error(e);
+              })
+          })
+          .catch(e => {
+            logger.info(`cdn_refreshtasks running failed!!!`);
+            logger.error(e);
+          })
+      } catch (e) {
+        logger.info(`cdn_refreshtasks running failed!!!`);
+        logger.error(e);
+      }
     })
     .catch(e => {
       logger.error(e);
