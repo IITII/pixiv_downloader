@@ -278,10 +278,10 @@ async function zipDir(dirName, zipFileName) {
 
 async function saveImg(data, IMG_TMP_DIR, useragent) {
   User_Agent = useragent;
-  mkdir(IMG_TMP_DIR, () => {
+  await mkdir(IMG_TMP_DIR, async () => {
     logger.info(`Create un-exist path: ${IMG_TMP_DIR}`);
     // LIMIT: Concurrency download limit
-    async.mapLimit(data, LIMIT, async (link, callback) => {
+    await async.mapLimit(data, LIMIT, async (link, callback) => {
       await downImg(link, callback);
     })
       .then(() => {
@@ -376,8 +376,10 @@ async function main() {
       logger.error(e);
     });
   data = _.uniqBy(data, 'url');
-  saveImg(data, IMG_DOWNLOAD_DIR, User_Agent)
-    .then(async () => {
+  await saveImg(data, IMG_DOWNLOAD_DIR, User_Agent);
+  // Wait for images downloaded
+  (
+    async () => {
       if (isNil(process.env.HWC_ENABLE)) {
         return;
       }
@@ -427,7 +429,8 @@ async function main() {
         logger.info(`cdn_refreshtasks running failed!!!`);
         logger.error(e);
       }
-    })
+    }
+  )()
     .catch(e => {
       logger.error(e);
     })
