@@ -412,9 +412,11 @@ async function main() {
         hwc_api.waitForRefreshTaskDone(token.x_subject_token, cdn_refresh_detail.body.id)
           .then(res => {
             logger.info(`Refresh Task Run Successful, Total: ${res}`);
-            hwc_api.cdn_preheatingtasks(preHeatingArray, token.x_subject_token)
+            logger.info(`Submitting cdn_preheatingtasks...`)
+            hwc_api.cdn_preheating(token.x_subject_token, preHeatingArray)
               .then(result => {
                 logger.info(`cdn_preheatingtasks submit successful`);
+                logger.debug(`Failed preheating task:`)
                 logger.debug(JSON.stringify(result));
               })
               .catch(e => {

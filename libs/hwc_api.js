@@ -334,10 +334,62 @@ async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, qu
   })
 }
 
+/**
+ * cdn preHeating task
+ * <br>
+ * @param token {String} huaweicloud IAM TOKEN
+ * @param preHeatArray {Array} pre-heating url array
+ * @param MAX_TRY Maximum attempts
+ * @param QUERY_BREAK {Number} setTimeout time unit
+ * @param chunk_size
+ * @param got_instance Got instance, default null
+ *
+ * As we know, one we commit the preHeatingTask, more than
+ * one cdn node will get resource file from the source
+ * site via public Internet.
+ * <br>
+ * So, the source site's traffic will be very busy after
+ * we commit the task.
+ * If too many URLs are submitted in a short time, most tasks will fail.
+ * <br>
+ * huaweicloud will retry once if connection time is more than 30s.
+ */
+async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK = 10 * 100, chunk_size = 10, got_instance = null) {
+  return await new Promise((resolve, reject) => {
+    if (!_.isArray(preHeatArray)) {
+      return reject('preHeatArray must be a array');
+    }
+    if (preHeatArray.length === 0) {
+      return reject('preHeatArray is empty')
+    }
+    preHeatArray = _.chunk(preHeatArray, chunk_size);
+    // failed urls array
+    let failed = [];
+    preHeatArray.forEach(async subArray => {
+      for (let i = 0; i < MAX_TRY; i++) {
+        let cdn_pre = await cdn_preheatingtasks(subArray, token);
+        await waitForRefreshTaskDone(token, cdn_pre.body.preheatingTask.id, MAX_TRY, QUERY_BREAK, got_instance)
+          .catch(e => {
+            if (_.isArray(e)) {
+              failed = failed.concat(e);
+            } else {
+              return reject(e);
+            }
+          })
+          .finally(() => {
+            i = MAX_TRY
+          })
+      }
+    });
+    return resolve(failed);
+  })
+}
+
 module.exports = {
   getToken,
   cdn_refreshtasks,
   cdn_preheatingtasks,
+  cdn_preheating,
   showHistoryTaskDetails,
   waitForRefreshTaskDone,
 }
