@@ -366,19 +366,28 @@ async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK
     // failed urls array
     let failed = [];
     preHeatArray.forEach(async subArray => {
+      let tmpArr = subArray;
       for (let i = 0; i < MAX_TRY; i++) {
-        let cdn_pre = await cdn_preheatingtasks(subArray, token);
+        let cdn_pre = await cdn_preheatingtasks(tmpArr, token);
         await waitForRefreshTaskDone(token, cdn_pre.body.preheatingTask.id, MAX_TRY, QUERY_BREAK, got_instance)
-          .catch(e => {
-            if (_.isArray(e)) {
-              failed = failed.concat(e);
-            } else {
-              return reject(e);
+          .then(res => {
+            if (res === subArray.length) {
+              i = MAX_TRY;
             }
           })
-          .finally(() => {
-            i = MAX_TRY
-          })
+          .catch(e => {
+            if (_.isArray(e)) {
+              if (i !== MAX_TRY - 1) {
+                // Retry
+                tmpArr = e;
+              } else {
+                failed = failed.concat(e);
+              }
+            } else {
+              // Other error
+              return reject(e);
+            }
+          });
       }
     });
     return resolve(failed);

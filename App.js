@@ -309,7 +309,8 @@ async function saveImg(data, IMG_TMP_DIR, useragent) {
 
 async function main() {
   if (isNil(PIXIV_USERNAME) || isNil(PIXIV_PASSWORD)) {
-    throw new Error('Empty PIXIV_USERNAME or PIXIV_PASSWORD!!!');
+    logger.error('Empty PIXIV_USERNAME or PIXIV_PASSWORD!!!');
+    process.exit(1);
   }
   const date = moment().format('YYYY-MM-DD'),
     IMG_DOWNLOAD_DIR = SAVE_DIR + path.sep + date;
@@ -317,10 +318,12 @@ async function main() {
     if (fs.statSync(IMG_DOWNLOAD_DIR).isDirectory()) {
       let files = fs.readdirSync(IMG_DOWNLOAD_DIR);
       if (files.length > 0) {
-        throw new Error(`Exist!!! Dir ${IMG_DOWNLOAD_DIR} is exist and not empty...`);
+        logger.error(`Exist!!! Dir ${IMG_DOWNLOAD_DIR} is exist and not empty...`);
+        process.exit(1);
       }
     } else {
-      throw new Error(`Error!!! A file named ${IMG_DOWNLOAD_DIR}!!!`);
+      logger.error(`Error!!! A file named ${IMG_DOWNLOAD_DIR}!!!`);
+      process.exit(1);
     }
   } else {
     try {
@@ -328,7 +331,8 @@ async function main() {
         logger.info(`Create un-exist path: ${IMG_DOWNLOAD_DIR}`);
       });
     } catch (e) {
-      throw new Error(e);
+      logger.error(e);
+      process.exit(1);
     }
   }
   const driver = new webdriver.Builder()
@@ -376,63 +380,66 @@ async function main() {
       logger.error(e);
     });
   data = _.uniqBy(data, 'url');
-  await saveImg(data, IMG_DOWNLOAD_DIR, User_Agent);
-  // Wait for images downloaded
-  (
-    async () => {
-      if (isNil(process.env.HWC_ENABLE)) {
-        return;
-      }
-      let baseUrl = process.env.HWC_BASEURL,
-        hwc_api = require('./libs/hwc_api');
-      if (isNil(baseUrl)) {
-        return;
-      }
-      if (!baseUrl.match('/$')) {
-        baseUrl += '/';
-      }
-      let token = await hwc_api.getToken();
-      let preHeatingArray = (() => {
-        let tmp = [];
-        data.forEach(e => {
-          tmp.push(baseUrl + date + '/' + path.basename(new URL(e.url).pathname))
-        });
-        return tmp;
-      })()
-      preHeatingArray.push(baseUrl + date + '.zip');
-      let refreshFilesArray = [baseUrl];
-      try {
-        let cdn_refresh = await hwc_api.cdn_refreshtasks(refreshFilesArray, token.x_subject_token);
-        logger.info(`cdn_refreshtasks submit successful`);
-        logger.debug(JSON.stringify(cdn_refresh));
-        let cdn_refresh_detail = await hwc_api.showHistoryTaskDetails(
-          token.x_subject_token,
-          cdn_refresh.body.refreshTask.id
-        );
-        hwc_api.waitForRefreshTaskDone(token.x_subject_token, cdn_refresh_detail.body.id)
-          .then(res => {
-            logger.info(`Refresh Task Run Successful, Total: ${res}`);
-            logger.info(`Submitting cdn_preheatingtasks...`)
-            hwc_api.cdn_preheating(token.x_subject_token, preHeatingArray)
-              .then(result => {
+  // Wait for images downloaded, to ensure
+  // cdn preheating & addUris to aria2 task success.
+  await saveImg(data, IMG_DOWNLOAD_DIR, User_Agent).then(async () => {
+    if (isNil(process.env.HWC_ENABLE)) {
+      return;
+    }
+    let baseUrl = process.env.HWC_BASEURL,
+      hwc_api = require('./libs/hwc_api');
+    if (isNil(baseUrl)) {
+      return;
+    }
+    if (!baseUrl.match('/$')) {
+      baseUrl += '/';
+    }
+    let token = await hwc_api.getToken();
+    let preHeatingArray = (() => {
+      let tmp = [];
+      data.forEach(e => {
+        tmp.push(baseUrl + date + '/' + path.basename(new URL(e.url).pathname))
+      });
+      return tmp;
+    })()
+    preHeatingArray.push(baseUrl + date + '.zip');
+    let refreshFilesArray = [baseUrl];
+    try {
+      let cdn_refresh = await hwc_api.cdn_refreshtasks(refreshFilesArray, token.x_subject_token);
+      logger.info(`cdn_refreshtasks submit successful`);
+      logger.debug(JSON.stringify(cdn_refresh));
+      let cdn_refresh_detail = await hwc_api.showHistoryTaskDetails(
+        token.x_subject_token,
+        cdn_refresh.body.refreshTask.id
+      );
+      await hwc_api.waitForRefreshTaskDone(token.x_subject_token, cdn_refresh_detail.body.id)
+        .then(res => {
+          logger.info(`Refresh Task Run Successful, Total: ${res}`);
+        })
+        .then(async () => {
+          logger.info(`Submitting cdn_preheatingtasks...`)
+          await hwc_api.cdn_preheating(token.x_subject_token, preHeatingArray)
+            .then(result => {
+              if (result.length === 0) {
                 logger.info(`cdn_preheatingtasks submit successful`);
+              } else {
                 logger.debug(`Failed preheating task:`)
                 logger.debug(JSON.stringify(result));
-              })
-              .catch(e => {
-                logger.error(e);
-              })
-          })
-          .catch(e => {
-            logger.info(`cdn_refreshtasks running failed!!!`);
-            logger.error(e);
-          })
-      } catch (e) {
-        logger.info(`cdn_refreshtasks running failed!!!`);
-        logger.error(e);
-      }
+              }
+            })
+            .catch(e => {
+              logger.error(e);
+            })
+        })
+        .catch(e => {
+          logger.info(`cdn_refreshtasks running failed!!!`);
+          logger.error(e);
+        })
+    } catch (e) {
+      logger.info(`cdn_refreshtasks running failed!!!`);
+      logger.error(e);
     }
-  )()
+  })
     .catch(e => {
       logger.error(e);
     })
@@ -466,11 +473,11 @@ main().then(() => {
                 })
             })
             .catch(e => {
-              throw new Error(e);
+              logger.error(e);
             })
         })
         .catch(e => {
-          throw new Error(e);
+          logger.error(e);
         })
     }
   })
