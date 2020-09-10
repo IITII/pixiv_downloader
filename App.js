@@ -5,6 +5,10 @@ const config = require('./config'),
   fs = require('fs'),
   path = require('path'),
   _ = require('lodash'),
+  // 引入 events 模块
+  events = require('events'),
+  // 创建 eventEmitter 对象
+  eventEmitter = new events.EventEmitter(),
   HttpsProxyAgent = require('https-proxy-agent'),
   webdriver = require('selenium-webdriver'),
   By = webdriver.By,
@@ -76,7 +80,7 @@ async function spendTime(func, ...args) {
       return resolve();
     } catch (e) {
       logger.error(e);
-      return reject();
+      return reject(e);
     } finally {
       let cost = new Date() - start;
       let logInfo = cost > 1000 ? cost / 1000 + 's' : cost + 'ms';
@@ -242,6 +246,7 @@ async function downImg(imgSrc, callback) {
       logger.info(`Save to ${imgSrc.savePath}`);
     })
     .catch(e => {
+      eventEmitter.emit('Download_Err', imgSrc);
       logger.error(`Download error!!!`);
       logger.error(e);
     })
@@ -294,6 +299,9 @@ async function saveImg(data, IMG_TMP_DIR, useragent) {
           .then(() => {
             logger.info(`Compress completed!!! Save to ${zipPath}`);
           })
+          .then(() => {
+            eventEmitter.emit('image_zipped');
+          })
           .catch(e => {
             logger.error(`Compress failed!!!`);
             logger.error(e);
@@ -306,6 +314,85 @@ async function saveImg(data, IMG_TMP_DIR, useragent) {
   });
 }
 
+function listen(data, date,) {
+  let map = (() => {
+    let tmpMap = new Map();
+    data.forEach(e => {
+      tmpMap.set(e.url, e);
+    });
+    return tmpMap;
+  })();
+  eventEmitter.on('Download_Err', (imgSrc) => {
+    if (map.has(imgSrc.url)) {
+      // Remove download err object
+      if (map.delete(imgSrc.url)) {
+        logger.info('Remove from cdn map successful');
+      } else {
+        logger.error(`Remove from cdn map successful failed`);
+      }
+    } else {
+      logger.warn(`No such key ${imgSrc.url}`);
+    }
+  });
+  eventEmitter.on('image_zipped', async () => {
+    if (isNil(process.env.HWC_ENABLE)) {
+      return;
+    }
+    let baseUrl = process.env.HWC_BASEURL,
+      hwc_api = require('./libs/hwc_api');
+    if (isNil(baseUrl)) {
+      return;
+    }
+    if (!baseUrl.match('/$')) {
+      baseUrl += '/';
+    }
+    let token = await hwc_api.getToken();
+    let preHeatingArray = (() => {
+      let tmp = [];
+      map.forEach(e => {
+        tmp.push(baseUrl + date + '/' + path.basename(new URL(e.url).pathname))
+      });
+      return tmp;
+    })()
+    preHeatingArray.push(baseUrl + date + '.zip');
+    let refreshFilesArray = [baseUrl];
+    try {
+      let cdn_refresh = await hwc_api.cdn_refreshtasks(refreshFilesArray, token.x_subject_token);
+      logger.info(`cdn_refreshtasks submit successful`);
+      logger.debug(JSON.stringify(cdn_refresh));
+      let cdn_refresh_detail = await hwc_api.showHistoryTaskDetails(
+        token.x_subject_token,
+        cdn_refresh.body.refreshTask.id
+      );
+      await hwc_api.waitForRefreshTaskDone(token.x_subject_token, cdn_refresh_detail.body.id)
+        .then(res => {
+          logger.info(`Refresh Task Run Successful, Total: ${res}`);
+        })
+        .then(async () => {
+          logger.info(`Submitting cdn_preheatingtasks...`)
+          await hwc_api.cdn_preheating(token.x_subject_token, preHeatingArray)
+            .then(result => {
+              if (result.length === 0) {
+                logger.info(`cdn_preheatingtasks submit successful`);
+              } else {
+                logger.debug(`Failed preheating task:`)
+                logger.debug(JSON.stringify(result));
+              }
+            })
+            .catch(e => {
+              logger.error(e);
+            })
+        })
+        .catch(e => {
+          logger.info(`cdn_refreshtasks running failed!!!`);
+          logger.error(e);
+        })
+    } catch (e) {
+      logger.info(`cdn_refreshtasks running failed!!!`);
+      logger.error(e);
+    }
+  });
+}
 
 async function main() {
   if (isNil(PIXIV_USERNAME) || isNil(PIXIV_PASSWORD)) {
@@ -380,66 +467,11 @@ async function main() {
       logger.error(e);
     });
   data = _.uniqBy(data, 'url');
+  // Register for listener
+  listen(data, date);
   // Wait for images downloaded, to ensure
   // cdn preheating & addUris to aria2 task success.
-  await saveImg(data, IMG_DOWNLOAD_DIR, User_Agent).then(async () => {
-    if (isNil(process.env.HWC_ENABLE)) {
-      return;
-    }
-    let baseUrl = process.env.HWC_BASEURL,
-      hwc_api = require('./libs/hwc_api');
-    if (isNil(baseUrl)) {
-      return;
-    }
-    if (!baseUrl.match('/$')) {
-      baseUrl += '/';
-    }
-    let token = await hwc_api.getToken();
-    let preHeatingArray = (() => {
-      let tmp = [];
-      data.forEach(e => {
-        tmp.push(baseUrl + date + '/' + path.basename(new URL(e.url).pathname))
-      });
-      return tmp;
-    })()
-    preHeatingArray.push(baseUrl + date + '.zip');
-    let refreshFilesArray = [baseUrl];
-    try {
-      let cdn_refresh = await hwc_api.cdn_refreshtasks(refreshFilesArray, token.x_subject_token);
-      logger.info(`cdn_refreshtasks submit successful`);
-      logger.debug(JSON.stringify(cdn_refresh));
-      let cdn_refresh_detail = await hwc_api.showHistoryTaskDetails(
-        token.x_subject_token,
-        cdn_refresh.body.refreshTask.id
-      );
-      await hwc_api.waitForRefreshTaskDone(token.x_subject_token, cdn_refresh_detail.body.id)
-        .then(res => {
-          logger.info(`Refresh Task Run Successful, Total: ${res}`);
-        })
-        .then(async () => {
-          logger.info(`Submitting cdn_preheatingtasks...`)
-          await hwc_api.cdn_preheating(token.x_subject_token, preHeatingArray)
-            .then(result => {
-              if (result.length === 0) {
-                logger.info(`cdn_preheatingtasks submit successful`);
-              } else {
-                logger.debug(`Failed preheating task:`)
-                logger.debug(JSON.stringify(result));
-              }
-            })
-            .catch(e => {
-              logger.error(e);
-            })
-        })
-        .catch(e => {
-          logger.info(`cdn_refreshtasks running failed!!!`);
-          logger.error(e);
-        })
-    } catch (e) {
-      logger.info(`cdn_refreshtasks running failed!!!`);
-      logger.error(e);
-    }
-  })
+  await saveImg(data, IMG_DOWNLOAD_DIR, User_Agent)
     .catch(e => {
       logger.error(e);
     })
