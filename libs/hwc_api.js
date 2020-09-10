@@ -33,6 +33,165 @@ const got = require('got'),
   };
 
 /**
+ * sleep for a while
+ * @param ms ms
+ */
+async function sleep(ms) {
+  return await new Promise((resolve) => {
+    setTimeout(() => {
+      return resolve();
+    }, ms)
+  })
+}
+
+/**
+ * get previous break traffic state, only support linux
+ * @param INTERFACE_NAME network interface device name
+ * @return {*[]|{TX: *, RX: *}} unit: byte, previous break traffic state
+ */
+function get_bytes(INTERFACE_NAME = 'eth0') {
+  const {spawnSync} = require('child_process'),
+    os = require('os');
+  let NET_FILE = '/proc/net/dev';
+  if (os.networkInterfaces()[INTERFACE_NAME] === undefined) {
+    throw new Error('No such interface!!!');
+  }
+  if (os.platform() !== 'linux') {
+    throw new Error('Unsupported platform!!!');
+  }
+  const op = {
+    "shell": true,
+    "windowsHide": true
+  }
+  let result = spawnSync(
+    `cat ${NET_FILE} | grep ${INTERFACE_NAME}  | awk '{print $2 " " $10}'`,
+    op
+  );
+  if (result.status !== 0) {
+    console.error(result.error);
+    return [];
+  }
+  let bytes = result.stdout.toString().split(new RegExp('\\s+'));
+  return {
+    RX: bytes[0],
+    TX: bytes[1]
+  }
+}
+
+/**
+ * Get live network speed
+ * @param INTERFACE_NAME Interface name
+ * @param sampling_break Sampling break
+ * @param human Show human readable net speed
+ */
+async function live_net_speed(INTERFACE_NAME = 'eth0', sampling_break = 1000, human = false) {
+  let pre = get_bytes(INTERFACE_NAME);
+  await sleep(sampling_break);
+  let current = get_bytes(INTERFACE_NAME);
+  return (() => {
+    let TX_S = (current.TX - pre.TX) / sampling_break * 1000;
+    let RX_S = (current.RX - pre.RX) / sampling_break * 1000;
+    return {
+      TX: {
+        human: human ? human_net_speed(TX_S) : '',
+        raw: TX_S
+      },
+      RX: {
+        human: human ? human_net_speed(RX_S) : '',
+        raw: RX_S
+      }
+    }
+  })();
+}
+
+/**
+ * Get human readable network speed
+ * @param bytes bytes
+ * @param pre_unit {number} 1024 or 1000, default 1024
+ * @param bits Keep decimal places, default 1
+ * @return {string} human readable network speed
+ */
+function human_net_speed(bytes, pre_unit = 1024, bits = 1) {
+  const kb = pre_unit,
+    mb = kb * pre_unit,
+    gb = mb * pre_unit,
+    tb = gb * pre_unit,
+    pb = tb * pre_unit;
+  console.log(pb)
+  if (bytes > gb) {
+    if (bytes > tb) {
+      if (bytes > pb) {
+        return `${(bytes / pb).toFixed(bits)} PB/s`
+      } else {
+        return `${(bytes / tb).toFixed(bits)} TB/s`
+      }
+    } else {
+      return `${(bytes / gb).toFixed(bits)} GB/s`
+    }
+  } else {
+    if (bytes > mb) {
+      return `${(bytes / mb).toFixed(bits)} MB/s`
+    } else {
+      if (bytes > kb) {
+        return `${(bytes / kb).toFixed(bits)} KB/s`
+      } else {
+        return `${(bytes).toFixed(bits)} B/s`
+      }
+    }
+  }
+}
+
+/**
+ * Wait for low traffic usage
+ * @param INTERFACE interface name, default eth0
+ * @param break_time query break,unit: millisecond, default 5000
+ * @param TX_RX 'TX' | 'RX' | 'TR', listening on TX or RX or TX & RX traffic, default TR
+ * @param MAX_RX_SPEED Max Receive speed,unit: Mbit/s, default 100
+ * @param MAX_TX_SPEED Max transmit speed,unit: Mbit/s, default 30
+ * @param usage, network usage limit, default 0.6
+ */
+async function wait_for_low_traffic_usage(INTERFACE = 'eth0', break_time = 5000, TX_RX = 'TR', MAX_RX_SPEED = 100, MAX_TX_SPEED = 30, usage = 0.6) {
+  return await new Promise(async (resolve, reject) => {
+    if (MAX_RX_SPEED <= 0 && MAX_TX_SPEED <= 0) {
+      return reject('Meaningless MAX_SPEED!!!');
+    }
+    let max_rx = MAX_RX_SPEED * usage / 8;
+    let max_tx = MAX_TX_SPEED * usage / 8;
+    while (true) {
+      let speed = await live_net_speed(INTERFACE, break_time / 5);
+      // kb
+      speed.RX.raw /= 1024;
+      // mb
+      speed.RX.raw /= 1024;
+      // kb
+      speed.TX.raw /= 1024;
+      // mb
+      speed.TX.raw /= 1024;
+      switch (TX_RX) {
+        case 'RX':
+          if (speed.RX.raw < max_rx) {
+            return resolve();
+          }
+          break;
+        case 'TX':
+          if (speed.TX.raw < max_tx) {
+            return resolve();
+          }
+          break;
+        case "TR":
+          if (speed.RX.raw < max_rx && speed.TX.raw < max_tx) {
+            return resolve();
+          }
+          break;
+        default:
+          throw new Error('Error TX_RX param!!!');
+      }
+      await sleep(break_time);
+    }
+  });
+}
+
+/**
  * Simple packaging got
  * @param prefixUrl {String | URL} got prefixUrl
  * @param token {String} huaweicloud IAM Token
@@ -78,10 +237,11 @@ function got_instance(prefixUrl, token, json_body = null) {
  * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc
  */
 async function hwc_common(prefixUrl, api_url, body, token, instance = null) {
-  return await new Promise((resolve, reject) => {
+  return await new Promise(async (resolve, reject) => {
     instance = instance === null
       ? instance = got_instance(prefixUrl, token, body)
       : instance;
+    await wait_for_low_traffic_usage();
     instance.post(api_url)
       .then(res => {
         if (res.statusCode === 200) {
@@ -132,7 +292,7 @@ function checkUrl(array) {
  * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/debug?product=IAM&api=KeystoneCreateUserTokenByPassword
  */
 async function getToken() {
-  return await new Promise((resolve, reject) => {
+  return await new Promise(async (resolve, reject) => {
     let userInfo = {
       "auth": {
         "identity": {
@@ -156,6 +316,7 @@ async function getToken() {
         }
       }
     }
+    await wait_for_low_traffic_usage();
     got_instance(API.IAM.END_POINT, "", userInfo)
       .post(API.IAM.KeystoneCreateUserTokenByPassword)
       .then(res => {
@@ -252,13 +413,14 @@ async function cdn_refreshtasks(array, token, types = "file", instance = null) {
  * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/mock?product=CDN&api=ShowHistoryTaskDetails
  */
 async function showHistoryTaskDetails(token, history_tasks_id, instance = null) {
-  return await new Promise((resolve, reject) => {
+  return await new Promise(async (resolve, reject) => {
     if (_.isNaN(history_tasks_id)) {
       return reject('Empty history_tasks_id');
     }
     instance = instance === null
       ? instance = got_instance(API.CDN.END_POINT, token)
       : instance;
+    await wait_for_low_traffic_usage();
     instance.get(API.CDN.ShowHistoryTaskDetails.replace('history_tasks_id', history_tasks_id))
       .then(res => {
         if (res.statusCode === 200) {
@@ -401,4 +563,11 @@ module.exports = {
   cdn_preheating,
   showHistoryTaskDetails,
   waitForRefreshTaskDone,
+  sleep,
+  get_bytes,
+  live_net_speed,
+  human_net_speed,
+  wait_for_low_traffic_usage,
+  got_instance,
+  hwc_common,
 }
