@@ -1,4 +1,32 @@
-'use strict';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: hwc_api.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: hwc_api.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>'use strict';
 /**
  * @author IITII
  * @date 2020/8/28 11:39
@@ -16,8 +44,8 @@ const got = require('got'),
   // User scope domain name
   SCOPE_DOMAIN_NAME = process.env.HWC_SCOPE_DOMAIN_NAME,
   // SCOPE_PROJECT_NAME = process.env.SCOPE_PROJECT_NAME,
-  // See: https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=IAM&api=KeystoneCreateUserTokenByPassword
-  // See: https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&api=CreatePreheatingTasks
+  // See: https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=IAM&amp;api=KeystoneCreateUserTokenByPassword
+  // See: https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&amp;api=CreatePreheatingTasks
 
   // Anything about api url?
   // See: https://github.com/sindresorhus/ky/issues/70
@@ -150,14 +178,14 @@ function human_net_speed(bytes, pre_unit = 1024, bits = 1) {
  * Wait for low traffic usage
  * @param INTERFACE interface name, default eth0
  * @param break_time query break,unit: millisecond, default 5000
- * @param TX_RX 'TX' | 'RX' | 'TR', listening on TX or RX or TX & RX traffic, default TR
+ * @param TX_RX 'TX' | 'RX' | 'TR', listening on TX or RX or TX &amp; RX traffic, default TR
  * @param MAX_RX_SPEED Max Receive speed,unit: Mbit/s, default 100
  * @param MAX_TX_SPEED Max transmit speed,unit: Mbit/s, default 30
  * @param usage, network usage limit, default 0.6
  */
 async function wait_for_low_traffic_usage(INTERFACE = 'eth0', break_time = 5000, TX_RX = 'TR', MAX_RX_SPEED = 100, MAX_TX_SPEED = 30, usage = 0.6) {
   return await new Promise(async (resolve, reject) => {
-    if (MAX_RX_SPEED <= 0 && MAX_TX_SPEED <= 0) {
+    if (MAX_RX_SPEED &lt;= 0 &amp;&amp; MAX_TX_SPEED &lt;= 0) {
       return reject('Meaningless MAX_SPEED!!!');
     }
     let max_rx = MAX_RX_SPEED * usage / 8;
@@ -174,17 +202,17 @@ async function wait_for_low_traffic_usage(INTERFACE = 'eth0', break_time = 5000,
       speed.TX.raw /= 1024;
       switch (TX_RX) {
         case 'RX':
-          if (speed.RX.raw < max_rx) {
+          if (speed.RX.raw &lt; max_rx) {
             return resolve();
           }
           break;
         case 'TX':
-          if (speed.TX.raw < max_tx) {
+          if (speed.TX.raw &lt; max_tx) {
             return resolve();
           }
           break;
         case "TR":
-          if (speed.RX.raw < max_rx && speed.TX.raw < max_tx) {
+          if (speed.RX.raw &lt; max_rx &amp;&amp; speed.TX.raw &lt; max_tx) {
             return resolve();
           }
           break;
@@ -208,7 +236,7 @@ Waiting ${break_time / 1000}s for low traffic usage...`);
  * @param json_body POST BODY, NULL for GET Method
  * @return {Got} Got instance
  * @see https://github.com/sindresorhus/got
- * <br>
+ * &lt;br>
  * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc
  */
 function got_instance(prefixUrl, token, json_body = null) {
@@ -243,7 +271,7 @@ function got_instance(prefixUrl, token, json_body = null) {
  * @param instance Got instance, default null
  * @return {JSON | Error}
  * @see https://github.com/sindresorhus/got
- * <br>
+ * &lt;br>
  * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc
  */
 async function hwc_common(prefixUrl, api_url, body, token, instance = null) {
@@ -299,7 +327,7 @@ function checkUrl(array) {
 /**
  * Get huaweicloud IAM TOKEN
  * @return {JSON} huaweicloud IAM TOKEN
- * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/debug?product=IAM&api=KeystoneCreateUserTokenByPassword
+ * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/debug?product=IAM&amp;api=KeystoneCreateUserTokenByPassword
  */
 async function getToken() {
   return await new Promise(async (resolve, reject) => {
@@ -358,7 +386,7 @@ async function getToken() {
  * @param token {String} huaweicloud IAM TOKEN
  * @param instance Got instance, default null
  * @return {JSON | Error} result
- * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/debug?product=CDN&api=CreatePreheatingTasks
+ * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/debug?product=CDN&amp;api=CreatePreheatingTasks
  */
 async function cdn_preheatingtasks(array, token, instance = null) {
   return await new Promise((resolve, reject) => {
@@ -389,7 +417,7 @@ async function cdn_preheatingtasks(array, token, instance = null) {
  * @param types {'file'|'directory'} refresh types, default 'file'
  * @param instance Got instance, default null
  * @return {JSON | Error} result
- * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&api=CreateRefreshTasks
+ * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&amp;api=CreateRefreshTasks
  */
 async function cdn_refreshtasks(array, token, types = "file", instance = null) {
   return await new Promise((resolve, reject) => {
@@ -420,7 +448,7 @@ async function cdn_refreshtasks(array, token, types = "file", instance = null) {
  * @param token {String} huaweicloud IAM TOKEN
  * @param instance Got instance, default null
  * @return {JSON | Error} result
- * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/mock?product=CDN&api=ShowHistoryTaskDetails
+ * @see https://apiexplorer.developer.huaweicloud.com/apiexplorer/mock?product=CDN&amp;api=ShowHistoryTaskDetails
  */
 async function showHistoryTaskDetails(token, history_tasks_id, instance = null) {
   return await new Promise(async (resolve, reject) => {
@@ -462,9 +490,9 @@ async function showHistoryTaskDetails(token, history_tasks_id, instance = null) 
  * @param instance  Got instance, default null
  * @return {Array | Number | Error}
  * Number for succeed task numbers
- * <br>
+ * &lt;br>
  * Array for failed task array
- * <br>
+ * &lt;br>
  * Error for other error
  */
 async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, query_break = 2 * 10 * 1000, instance) {
@@ -513,7 +541,7 @@ Waiting ${query_break / 1000}s for next query...`);
 
 /**
  * cdn preHeating task
- * <br>
+ * &lt;br>
  * @param token {String} huaweicloud IAM TOKEN
  * @param preHeatArray {Array} pre-heating url array
  * @param MAX_TRY Maximum attempts
@@ -524,11 +552,11 @@ Waiting ${query_break / 1000}s for next query...`);
  * As we know, one we commit the preHeatingTask, more than
  * one cdn node will get resource file from the source
  * site via public Internet.
- * <br>
+ * &lt;br>
  * So, the source site's traffic will be very busy after
  * we commit the task.
  * If too many URLs are submitted in a short time, most tasks will fail.
- * <br>
+ * &lt;br>
  * huaweicloud will retry once if connection time is more than 30s.
  */
 async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK = 10 * 100, chunk_size = 10, got_instance = null) {
@@ -544,7 +572,7 @@ async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK
     let failed = [];
     await async.mapLimit(preHeatArray, 1, async (subArray, callback) => {
       let tmpArr = subArray;
-      for (let i = 0; i < MAX_TRY; i++) {
+      for (let i = 0; i &lt; MAX_TRY; i++) {
         let cdn_pre = await cdn_preheatingtasks(tmpArr, token);
         await waitForRefreshTaskDone(token, cdn_pre.body.preheatingTask.id, MAX_TRY, QUERY_BREAK, got_instance)
           .then(res => {
@@ -583,4 +611,26 @@ module.exports = {
   cdn_preheating,
   showHistoryTaskDetails,
   waitForRefreshTaskDone,
-}
+}</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#cdn_preheating">cdn_preheating</a></li><li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li><li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li><li><a href="global.html#checkUrl">checkUrl</a></li><li><a href="global.html#get_bytes">get_bytes</a></li><li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li><li><a href="global.html#getDom">getDom</a></li><li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li><li><a href="global.html#getToken">getToken</a></li><li><a href="global.html#got">got</a></li><li><a href="global.html#got_instance">got_instance</a></li><li><a href="global.html#human_net_speed">human_net_speed</a></li><li><a href="global.html#hwc_common">hwc_common</a></li><li><a href="global.html#isNil">isNil</a></li><li><a href="global.html#live_net_speed">live_net_speed</a></li><li><a href="global.html#logger">logger</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#mkdir">mkdir</a></li><li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li><li><a href="global.html#sleep">sleep</a></li><li><a href="global.html#spendTime">spendTime</a></li><li><a href="global.html#wait_for_low_traffic_usage">wait_for_low_traffic_usage</a></li><li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li><li><a href="global.html#zipDir">zipDir</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Mon Sep 21 2020 17:14:44 GMT+0800 (GMT+08:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

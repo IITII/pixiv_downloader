@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <title>JSDoc: Home</title>
 
-    <script src="scripts/prettify/prettify.js"></script>
-    <script src="scripts/prettify/lang-css.js"></script>
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
     <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
-    <link href="styles/prettify-tomorrow.css" rel="stylesheet" type="text/css">
-    <link href="styles/jsdoc-default.css" rel="stylesheet" type="text/css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
 </head>
 
 <body>
@@ -19,72 +19,184 @@
 
     <h1 class="page-title">Home</h1>
 
+    
 
-    <h3></h3>
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
 
 
     <section>
         <article><h1>PIXIV_DOWNLOADER</h1>
-            <blockquote>
-                <p>A simple downloader for pixiv daily</p>
-            </blockquote>
-            <h2>Use</h2>
-            <ul>
-                <li>git clone</li>
-                <li>SET ENV, for example: export PIXIV_USERNAME='233'</li>
-                <li>npm start</li>
-            </ul>
-            <h2>Config</h2>
-            <ul>
-                <li>Most configure in <code>config.js</code>, please modify it as you want</li>
-                <li>Please modify ENV setting if you want to use huaweicloud cdn. (<code>disable by default</code>)</li>
-            </ul>
-            <h2>Docs</h2>
-            <ul>
-                <li>See: <a
-                        href="https://iitii.github.io/pixiv_downloader/">https://iitii.github.io/pixiv_downloader/</a>
-                </li>
-            </ul>
-        </article>
+<blockquote>
+<p>A simple downloader for pixiv daily</p>
+</blockquote>
+<h2>Use</h2>
+<ul>
+<li>git clone</li>
+<li>SET ENV, for example: export PIXIV_USERNAME='233'</li>
+<li>npm start</li>
+</ul>
+<h2>Config</h2>
+<ul>
+<li>Most configure in <code>config.js</code>, please modify it as you want</li>
+<li>Please modify ENV setting if you want to use huaweicloud cdn. (<code>disable by default</code>)</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Param</th>
+<th style="text-align:center">Default</th>
+<th style="text-align:center">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">pixiv.username</td>
+<td style="text-align:center">process.env.PIXIV_USERNAME</td>
+<td style="text-align:center">pixiv username</td>
+</tr>
+<tr>
+<td style="text-align:center">pixiv.password</td>
+<td style="text-align:center">process.env.PIXIV_PASSWORD</td>
+<td style="text-align:center">pixiv password</td>
+</tr>
+<tr>
+<td style="text-align:center">pixiv.proxy</td>
+<td style="text-align:center">process.env.HTTP_PROXY</td>
+<td style="text-align:center">http_proxy for pixiv</td>
+</tr>
+<tr>
+<td style="text-align:center">webdriver</td>
+<td style="text-align:center"><code>headless</code></td>
+<td style="text-align:center">selenium args</td>
+</tr>
+<tr>
+<td style="text-align:center">save.aria2Enable</td>
+<td style="text-align:center">false</td>
+<td style="text-align:center">enable or disable aria2</td>
+</tr>
+<tr>
+<td style="text-align:center">save.aria2.href</td>
+<td style="text-align:center">null</td>
+<td style="text-align:center">aria2 download url href</td>
+</tr>
+<tr>
+<td style="text-align:center">save.aria2.rpc</td>
+<td style="text-align:center">localhost:6800</td>
+<td style="text-align:center">aria2 rpc config</td>
+</tr>
+<tr>
+<td style="text-align:center">save.aria2.config</td>
+<td style="text-align:center">{&quot;pause-metadata&quot;: &quot;true&quot;}</td>
+<td style="text-align:center">aria2 download configure</td>
+</tr>
+<tr>
+<td style="text-align:center">save.proxy</td>
+<td style="text-align:center">process.env.HTTP_PROXY</td>
+<td style="text-align:center">http_proxy  for download</td>
+</tr>
+<tr>
+<td style="text-align:center">save.dir</td>
+<td style="text-align:center">path.resolve(__dirname, './tmp')</td>
+<td style="text-align:center">save dir for image</td>
+</tr>
+<tr>
+<td style="text-align:center">save.limit</td>
+<td style="text-align:center">10</td>
+<td style="text-align:center">concurrency download limit</td>
+</tr>
+<tr>
+<td style="text-align:center">proxy</td>
+<td style="text-align:center">process.env.HTTP_PROXY</td>
+<td style="text-align:center">global http_proxy</td>
+</tr>
+<tr>
+<td style="text-align:center">user_agent</td>
+<td style="text-align:center"><code>windows chrome default, dont modify</code></td>
+<td style="text-align:center">UserAgent for download, dynamic update</td>
+</tr>
+<tr>
+<td style="text-align:center">baseUrl</td>
+<td style="text-align:center">process.env.HWC_BASEURL</td>
+<td style="text-align:center">huaweicloud cdn basic url</td>
+</tr>
+<tr>
+<td style="text-align:center">HWC_ENABLE</td>
+<td style="text-align:center">process.env.HWC_ENABLE (disable by default)</td>
+<td style="text-align:center">enable or disable huaweicloud cdn</td>
+</tr>
+<tr>
+<td style="text-align:center">HWC_BASEURL</td>
+<td style="text-align:center">process.env.HWC_BASEURL</td>
+<td style="text-align:center">huaweicloud cdn basic url</td>
+</tr>
+<tr>
+<td style="text-align:center">NAME</td>
+<td style="text-align:center">process.env.HWC_NAME</td>
+<td style="text-align:center">huaweicloud username</td>
+</tr>
+<tr>
+<td style="text-align:center">PASSWORD</td>
+<td style="text-align:center">process.env.HWC_PASSWORD</td>
+<td style="text-align:center">huaweicloud password</td>
+</tr>
+<tr>
+<td style="text-align:center">USER_DOMAIN_NAME</td>
+<td style="text-align:center">process.env.HWC_USER_DOMAIN_NAME</td>
+<td style="text-align:center">huaweicloud user domain name</td>
+</tr>
+<tr>
+<td style="text-align:center">SCOPE_DOMAIN_NAME</td>
+<td style="text-align:center">process.env.HWC_SCOPE_DOMAIN_NAME</td>
+<td style="text-align:center">huaweicloud user scope domain name</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>See: <a href="https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=IAM&amp;api=KeystoneCreateUserTokenByPassword">https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=IAM&amp;api=KeystoneCreateUserTokenByPassword</a><br>
+See: <a href="https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&amp;api=CreatePreheatingTasks">https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&amp;api=CreatePreheatingTasks</a></p>
+</blockquote>
+<h2>Docs</h2>
+<ul>
+<li>See: <a href="https://iitii.github.io/pixiv_downloader/">https://iitii.github.io/pixiv_downloader/</a></li>
+</ul></article>
     </section>
+
+
+
+
 
 
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2>
-    <h3>Global</h3>
-    <ul>
-        <li><a href="global.html#cdn_preheating">cdn_preheating</a></li>
-        <li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li>
-        <li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li>
-        <li><a href="global.html#checkUrl">checkUrl</a></li>
-        <li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li>
-        <li><a href="global.html#getDom">getDom</a></li>
-        <li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li>
-        <li><a href="global.html#getToken">getToken</a></li>
-        <li><a href="global.html#got">got</a></li>
-        <li><a href="global.html#got_instance">got_instance</a></li>
-        <li><a href="global.html#hwc_common">hwc_common</a></li>
-        <li><a href="global.html#isNil">isNil</a></li>
-        <li><a href="global.html#logger">logger</a></li>
-        <li><a href="global.html#login">login</a></li>
-        <li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li>
-        <li><a href="global.html#sleep">sleep</a></li>
-        <li><a href="global.html#spendTime">spendTime</a></li>
-        <li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li>
-        <li><a href="global.html#zipDir">zipDir</a></li>
-    </ul>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#cdn_preheating">cdn_preheating</a></li><li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li><li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li><li><a href="global.html#checkUrl">checkUrl</a></li><li><a href="global.html#get_bytes">get_bytes</a></li><li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li><li><a href="global.html#getDom">getDom</a></li><li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li><li><a href="global.html#getToken">getToken</a></li><li><a href="global.html#got">got</a></li><li><a href="global.html#got_instance">got_instance</a></li><li><a href="global.html#human_net_speed">human_net_speed</a></li><li><a href="global.html#hwc_common">hwc_common</a></li><li><a href="global.html#isNil">isNil</a></li><li><a href="global.html#live_net_speed">live_net_speed</a></li><li><a href="global.html#logger">logger</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#mkdir">mkdir</a></li><li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li><li><a href="global.html#sleep">sleep</a></li><li><a href="global.html#spendTime">spendTime</a></li><li><a href="global.html#wait_for_low_traffic_usage">wait_for_low_traffic_usage</a></li><li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li><li><a href="global.html#zipDir">zipDir</a></li></ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Sep 05 2020 16:58:44
-    GMT+0800 (GMT+08:00)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Mon Sep 21 2020 17:14:44 GMT+0800 (GMT+08:00)
 </footer>
 
 <script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"></script>
+<script src="scripts/linenumber.js"> </script>
 </body>
 </html>
