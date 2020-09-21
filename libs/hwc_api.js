@@ -5,6 +5,8 @@
  */
 const got = require('got'),
   _ = require('lodash'),
+  async = require('async'),
+  date = new Date(),
   // User name
   NAME = process.env.HWC_NAME,
   // User password
@@ -186,6 +188,11 @@ async function wait_for_low_traffic_usage(INTERFACE = 'eth0', break_time = 5000,
         default:
           throw new Error('Error TX_RX param!!!');
       }
+      console.info(`[${date.getFullYear()}\
+-${date.getMonth()}\
+-${date.getDate()} \
+${date.getHours()}:${date.getMinutes()}] \
+Waiting ${break_time / 1000}s for low traffic usage...`);
       await sleep(break_time);
     }
   });
@@ -457,10 +464,10 @@ async function showHistoryTaskDetails(token, history_tasks_id, instance = null) 
  * <br>
  * Error for other error
  */
-async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, query_break = 10 * 1000, instance) {
-  return await new Promise((resolve, reject) => {
+async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, query_break = 2 * 10 * 1000, instance) {
+  return await new Promise(async (resolve, reject) => {
     let try_time = 0;
-    setTimeout(async () => {
+    while (true) {
       if (++try_time > MAX_TRY) {
         return reject('Maximum number of attempts reached!!!');
       }
@@ -480,7 +487,7 @@ async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, qu
                 }
               });
               return tmp;
-            })()
+            })();
             if (failedArray.length === 0) {
               return reject('Internal Error!!!');
             } else {
@@ -491,8 +498,13 @@ async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, qu
       } catch (e) {
         return reject(e);
       }
-
-    }, query_break)
+      console.info(`[${date.getFullYear()}\
+-${date.getMonth()}\
+-${date.getDate()} \
+${date.getHours()}:${date.getMinutes()}]: \
+Waiting ${query_break / 1000}s for next query...`);
+      await sleep(query_break);
+    }
   })
 }
 
@@ -517,7 +529,7 @@ async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, qu
  * huaweicloud will retry once if connection time is more than 30s.
  */
 async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK = 10 * 100, chunk_size = 10, got_instance = null) {
-  return await new Promise((resolve, reject) => {
+  return await new Promise(async (resolve, reject) => {
     if (!_.isArray(preHeatArray)) {
       return reject('preHeatArray must be a array');
     }
@@ -527,14 +539,15 @@ async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK
     preHeatArray = _.chunk(preHeatArray, chunk_size);
     // failed urls array
     let failed = [];
-    preHeatArray.forEach(async subArray => {
+    await async.mapLimit(preHeatArray, 1, async (subArray, callback) => {
       let tmpArr = subArray;
       for (let i = 0; i < MAX_TRY; i++) {
         let cdn_pre = await cdn_preheatingtasks(tmpArr, token);
         await waitForRefreshTaskDone(token, cdn_pre.body.preheatingTask.id, MAX_TRY, QUERY_BREAK, got_instance)
           .then(res => {
             if (res === subArray.length) {
-              i = MAX_TRY;
+              // i = MAX_TRY;
+              return callback;
             }
           })
           .catch(e => {
@@ -547,27 +560,24 @@ async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK
               }
             } else {
               // Other error
-              return reject(e);
+              console.error(e);
+              return callback;
+              // return reject(e);
             }
           });
       }
-    });
-    return resolve(failed);
+      return callback;
+    })
+      .finally(() => {
+        return resolve(failed);
+      });
   })
 }
 
 module.exports = {
   getToken,
   cdn_refreshtasks,
-  cdn_preheatingtasks,
   cdn_preheating,
   showHistoryTaskDetails,
   waitForRefreshTaskDone,
-  sleep,
-  get_bytes,
-  live_net_speed,
-  human_net_speed,
-  wait_for_low_traffic_usage,
-  got_instance,
-  hwc_common,
 }
