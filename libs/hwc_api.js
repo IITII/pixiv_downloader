@@ -467,7 +467,7 @@ async function showHistoryTaskDetails(token, history_tasks_id, instance = null) 
  * <br>
  * Error for other error
  */
-async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, query_break = 2 * 10 * 1000, instance) {
+async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, query_break = 6 * 10 * 1000, instance) {
   return await new Promise(async (resolve, reject) => {
     let try_time = 0;
     while (true) {
@@ -531,7 +531,7 @@ Waiting ${query_break / 1000}s for next query...`);
  * <br>
  * huaweicloud will retry once if connection time is more than 30s.
  */
-async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK = 10 * 100, chunk_size = 10, got_instance = null) {
+async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK = 6 * 10 * 1000, chunk_size = 10, got_instance = null) {
   return await new Promise(async (resolve, reject) => {
     if (!_.isArray(preHeatArray)) {
       return reject('preHeatArray must be a array');
@@ -563,9 +563,9 @@ async function cdn_preheating(token, preHeatArray, MAX_TRY = 10 * 6, QUERY_BREAK
               }
             } else {
               // Other error
-              console.error(e);
-              return callback;
-              // return reject(e);
+              // console.error(e);
+              // return callback;
+              return reject(e);
             }
           });
       }
