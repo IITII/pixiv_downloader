@@ -1825,49 +1825,139 @@ huaweicloud will retry once if connection time is more than 30s.</td>
         Type
     </dt>
     <dd>
-        
-<span class="param-type">Array</span>
+
+        <span class="param-type">Array</span>
 
 
     </dd>
 </dl>
 
-    
+
+    <h4 class="name" id="getSet"><span class="type-signature">(async) </span>getSet<span
+            class="signature">(key, value)</span><span class="type-signature"> &rarr; {Number}</span></h4>
 
 
+    <div class="description">
+        get value for special key
+    </div>
 
 
-
-        
-            
-
-    
-
-    
-    <h4 class="name" id="getToken"><span class="type-signature">(async) </span>getToken<span class="signature">()</span><span class="type-signature"> &rarr; {JSON}</span></h4>
-    
-
-    
+    <h5>Parameters:</h5>
 
 
+    <table class="params">
+        <thead>
+        <tr>
 
-<div class="description">
-    Get huaweicloud IAM TOKEN
-</div>
-
-
-
+            <th>Name</th>
 
 
+            <th>Type</th>
 
 
+            <th>Default</th>
 
 
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
 
 
+        <tr>
+
+            <td class="name"><code>key</code></td>
 
 
-<dl class="details">
+            <td class="type">
+
+            </td>
+
+
+            <td class="default">
+
+            </td>
+
+
+            <td class="description last">pid, task "https://www.pixiv.net/artworks/84521887" for instance,
+                the key of this url is 84521887
+            </td>
+        </tr>
+
+
+        <tr>
+
+            <td class="name"><code>value</code></td>
+
+
+            <td class="type">
+
+            </td>
+
+
+            <td class="default">
+
+                1
+
+            </td>
+
+
+            <td class="description last">stepper</td>
+        </tr>
+
+
+        </tbody>
+    </table>
+
+
+    <dl class="details">
+
+
+        <dt class="tag-source">Source:</dt>
+        <dd class="tag-source">
+            <ul class="dummy">
+                <li>
+                    <a href="redis_api.js.html">redis_api.js</a>, <a href="redis_api.js.html#line71">line 71</a>
+                </li>
+            </ul>
+        </dd>
+
+
+    </dl>
+
+
+    <h5>Returns:</h5>
+
+
+    <div class="param-desc">
+        duplicate times
+    </div>
+
+
+    <dl>
+        <dt>
+            Type
+        </dt>
+        <dd>
+
+            <span class="param-type">Number</span>
+
+
+        </dd>
+    </dl>
+
+
+    <h4 class="name" id="getToken"><span class="type-signature">(async) </span>getToken<span class="signature">()</span><span
+            class="type-signature"> &rarr; {JSON}</span></h4>
+
+
+    <div class="description">
+        Get huaweicloud IAM TOKEN
+    </div>
+
+
+    <dl class="details">
 
     
 
@@ -3301,48 +3391,101 @@ huaweicloud will retry once if connection time is more than 30s.</td>
     <dd class="tag-source"><ul class="dummy"><li>
         <a href="utils.js.html">utils.js</a>, <a href="utils.js.html#line58">line 58</a>
     </li></ul></dd>
-    
 
-    
 
-    
-
-    
 </dl>
 
 
+    <h4 class="name" id="removePast"><span class="type-signature">(async) </span>removePast<span class="signature">(array)</span><span
+            class="type-signature"> &rarr; {Array}</span></h4>
 
 
+    <div class="description">
+        Remove duplicate url which was downloaded in the past
+    </div>
 
 
+    <h5>Parameters:</h5>
 
 
+    <table class="params">
+        <thead>
+        <tr>
+
+            <th>Name</th>
 
 
+            <th>Type</th>
 
 
+            <th class="last">Description</th>
+        </tr>
+        </thead>
+
+        <tbody>
 
 
+        <tr>
+
+            <td class="name"><code>array</code></td>
 
 
+            <td class="type">
+
+            </td>
 
 
+            <td class="description last">origin array</td>
+        </tr>
 
 
-        
-            
-
-    
-
-    
-    <h4 class="name" id="showHistoryTaskDetails"><span class="type-signature">(async) </span>showHistoryTaskDetails<span class="signature">(history_tasks_id, token, instance)</span><span class="type-signature"> &rarr; {JSON|Error}</span></h4>
-    
-
-    
+        </tbody>
+    </table>
 
 
+    <dl class="details">
 
-<div class="description">
+
+        <dt class="tag-source">Source:</dt>
+        <dd class="tag-source">
+            <ul class="dummy">
+                <li>
+                    <a href="redis_api.js.html">redis_api.js</a>, <a href="redis_api.js.html#line34">line 34</a>
+                </li>
+            </ul>
+        </dd>
+
+
+    </dl>
+
+
+    <h5>Returns:</h5>
+
+
+    <div class="param-desc">
+        removed array
+    </div>
+
+
+    <dl>
+        <dt>
+            Type
+        </dt>
+        <dd>
+
+            <span class="param-type">Array</span>
+
+
+        </dd>
+    </dl>
+
+
+    <h4 class="name" id="showHistoryTaskDetails"><span class="type-signature">(async) </span>showHistoryTaskDetails<span
+            class="signature">(history_tasks_id, token, instance)</span><span class="type-signature"> &rarr; {JSON|Error}</span>
+    </h4>
+
+
+    <div class="description">
     huaweicloud cdn refreshtasks
 </div>
 
@@ -4651,13 +4794,43 @@ Unsupported chinese folder name
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#cdn_preheating">cdn_preheating</a></li><li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li><li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li><li><a href="global.html#checkUrl">checkUrl</a></li><li><a href="global.html#get_bytes">get_bytes</a></li><li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li><li><a href="global.html#getDom">getDom</a></li><li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li><li><a href="global.html#getToken">getToken</a></li><li><a href="global.html#got">got</a></li><li><a href="global.html#got_instance">got_instance</a></li><li><a href="global.html#human_net_speed">human_net_speed</a></li><li><a href="global.html#hwc_common">hwc_common</a></li><li><a href="global.html#isNil">isNil</a></li><li><a href="global.html#live_net_speed">live_net_speed</a></li><li><a href="global.html#logger">logger</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#mkdir">mkdir</a></li><li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li><li><a href="global.html#sleep">sleep</a></li><li><a href="global.html#spendTime">spendTime</a></li><li><a href="global.html#wait_for_low_traffic_usage">wait_for_low_traffic_usage</a></li><li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li><li><a href="global.html#zipDir">zipDir</a></li></ul>
+    <h2><a href="index.html">Home</a></h2>
+    <h3>Global</h3>
+    <ul>
+        <li><a href="global.html#cdn_preheating">cdn_preheating</a></li>
+        <li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li>
+        <li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li>
+        <li><a href="global.html#checkUrl">checkUrl</a></li>
+        <li><a href="global.html#get_bytes">get_bytes</a></li>
+        <li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li>
+        <li><a href="global.html#getDom">getDom</a></li>
+        <li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li>
+        <li><a href="global.html#getSet">getSet</a></li>
+        <li><a href="global.html#getToken">getToken</a></li>
+        <li><a href="global.html#got">got</a></li>
+        <li><a href="global.html#got_instance">got_instance</a></li>
+        <li><a href="global.html#human_net_speed">human_net_speed</a></li>
+        <li><a href="global.html#hwc_common">hwc_common</a></li>
+        <li><a href="global.html#isNil">isNil</a></li>
+        <li><a href="global.html#live_net_speed">live_net_speed</a></li>
+        <li><a href="global.html#logger">logger</a></li>
+        <li><a href="global.html#login">login</a></li>
+        <li><a href="global.html#mkdir">mkdir</a></li>
+        <li><a href="global.html#removePast">removePast</a></li>
+        <li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+        <li><a href="global.html#spendTime">spendTime</a></li>
+        <li><a href="global.html#wait_for_low_traffic_usage">wait_for_low_traffic_usage</a></li>
+        <li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li>
+        <li><a href="global.html#zipDir">zipDir</a></li>
+    </ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Mon Sep 21 2020 17:14:44 GMT+0800 (GMT+08:00)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Wed Sep 23 2020 17:27:40
+    GMT+0800 (GMT+08:00)
 </footer>
 
 <script> prettyPrint(); </script>

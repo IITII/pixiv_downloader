@@ -115,6 +115,16 @@ async function getDaily() {
       let rankUrls = await getDailyRankUrl();
       // Remove duplicate
       rankUrls = _.uniq(rankUrls);
+      // We need remove duplicate before download new images.
+      // Maybe this url had already downloaded at past.
+      if (config.redis.enable) {
+        const redis_api = require('./redis_api.js');
+        rankUrls = await redis_api.removePast(rankUrls);
+        redis_api.quitRedis();
+      }
+      if (rankUrls.length === 0) {
+        return resolve([]);
+      }
       await login(driver, PIXIV_USERNAME, PIXIV_PASSWORD);
       // Update user_agent with live chrome user_agent
       User_Agent = await driver.executeScript(`return navigator.userAgent`)

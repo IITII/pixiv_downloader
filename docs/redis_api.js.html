@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: redis_api.js</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link href="styles/prettify-tomorrow.css" rel="stylesheet" type="text/css">
+    <link href="styles/jsdoc-default.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: redis_api.js</h1>
+
+
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @author IITII
+ * @date 2020/9/23 12:41
+ */
+'use strict';
+const
+  config = require('../config.js'),
+  path = require('path'),
+  redis = require('redis'),
+  client = redis.createClient(config.redis.connect),
+  {logger} = require('./logger.js');
+
+client.on("error", error => {
+  logger.error(`Redis's error: ${error}`);
+});
+client.on('connect', () => {
+  logger.info(`Redis is connected.`);
+});
+client.on('ready', () => {
+  logger.info(`Redis is ready.`);
+});
+client.on("warning", warning => {
+  logger.info(`Redis's warning: ${warning}`);
+});
+client.on('end', () => {
+  logger.info(`Redis is connected.`);
+});
+
+/**
+ * Remove duplicate url which was downloaded in the past
+ * @param array origin array
+ * @return {Array} removed array
+ */
+async function removePast(array) {
+  return await new Promise(async (resolve, reject) => {
+    let tmp = [];
+    for (let i = 0; i &lt; array.length; i++) {
+      let ele = array[i];
+      // ┌─────────────────────┬────────────┐
+      // │          dir        │    base    │
+      // ├──────┬              ├──────┬─────┤
+      // │ root │              │ name │ ext │
+      // "  /    home/user/dir / file  .txt "
+      // └──────┴──────────────┴──────┴─────┘
+      const key = path.parse(ele).name;
+      await getSet(key)
+        .then(value => {
+          if (value === 1) {
+            tmp.push(ele);
+            logger.info(`Pushing new daily url: ${ele}...`);
+          } else {
+            logger.info(`Aborting duplicate daily url: ${ele}...`);
+            logger.info(`Duplicate count: ${value}`);
+          }
+        })
+        .catch(e => {
+          return reject(e);
+        });
+    }
+    return resolve(tmp);
+  });
+}
+
+/**
+ * get value for special key
+ * @param key pid, task "https://www.pixiv.net/artworks/84521887" for instance,
+ * the key of this url is 84521887
+ * @param value stepper
+ * @return {Number} duplicate times
+ */
+async function getSet(key, value = 1) {
+  return await new Promise((resolve, reject) => {
+    client.get(key, (err, res) => {
+      if (err) {
+        return reject(err);
+      }
+      if (res !== null) {
+        value += parseInt(res);
+      }
+      client.set(key, value, (err1, res1) => {
+        if (err1) {
+          logger.error(err1);
+          return resolve(value);
+        }
+        if (res1 === 'OK') {
+          logger.info(value === 1
+            ? `Added a new key: ${key}`
+            : `Increased value for key: ${key}`);
+          return resolve(value);
+        } else {
+          return reject(`Unknown response: ${res1}`);
+        }
+      });
+    });
+  })
+}
+
+function quitRedis() {
+  client.quit();
+}
+
+module.exports = {
+  removePast,
+  quitRedis,
+}</code></pre>
+        </article>
+    </section>
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2>
+    <h3>Global</h3>
+    <ul>
+        <li><a href="global.html#cdn_preheating">cdn_preheating</a></li>
+        <li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li>
+        <li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li>
+        <li><a href="global.html#checkUrl">checkUrl</a></li>
+        <li><a href="global.html#get_bytes">get_bytes</a></li>
+        <li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li>
+        <li><a href="global.html#getDom">getDom</a></li>
+        <li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li>
+        <li><a href="global.html#getSet">getSet</a></li>
+        <li><a href="global.html#getToken">getToken</a></li>
+        <li><a href="global.html#got">got</a></li>
+        <li><a href="global.html#got_instance">got_instance</a></li>
+        <li><a href="global.html#human_net_speed">human_net_speed</a></li>
+        <li><a href="global.html#hwc_common">hwc_common</a></li>
+        <li><a href="global.html#isNil">isNil</a></li>
+        <li><a href="global.html#live_net_speed">live_net_speed</a></li>
+        <li><a href="global.html#logger">logger</a></li>
+        <li><a href="global.html#login">login</a></li>
+        <li><a href="global.html#mkdir">mkdir</a></li>
+        <li><a href="global.html#removePast">removePast</a></li>
+        <li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+        <li><a href="global.html#spendTime">spendTime</a></li>
+        <li><a href="global.html#wait_for_low_traffic_usage">wait_for_low_traffic_usage</a></li>
+        <li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li>
+        <li><a href="global.html#zipDir">zipDir</a></li>
+    </ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Wed Sep 23 2020 17:27:40
+    GMT+0800 (GMT+08:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>

@@ -61,7 +61,7 @@
 <table>
 <thead>
 <tr>
-<th style="text-align:center">Param</th>
+<th style="text-align:center">Property</th>
 <th style="text-align:center">Default</th>
 <th style="text-align:center">Description</th>
 </tr>
@@ -108,29 +108,39 @@
 <td style="text-align:center">aria2 download configure</td>
 </tr>
 <tr>
-<td style="text-align:center">save.proxy</td>
-<td style="text-align:center">process.env.HTTP_PROXY</td>
-<td style="text-align:center">http_proxy  for download</td>
+    <td style="text-align:center">save.proxy</td>
+    <td style="text-align:center">process.env.HTTP_PROXY</td>
+    <td style="text-align:center">http_proxy for download</td>
 </tr>
 <tr>
-<td style="text-align:center">save.dir</td>
-<td style="text-align:center">path.resolve(__dirname, './tmp')</td>
-<td style="text-align:center">save dir for image</td>
+    <td style="text-align:center">save.dir</td>
+    <td style="text-align:center">path.resolve(__dirname, './tmp')</td>
+    <td style="text-align:center">save dir for image</td>
 </tr>
 <tr>
-<td style="text-align:center">save.limit</td>
-<td style="text-align:center">10</td>
-<td style="text-align:center">concurrency download limit</td>
+    <td style="text-align:center">save.limit</td>
+    <td style="text-align:center">10</td>
+    <td style="text-align:center">concurrency download limit</td>
 </tr>
 <tr>
-<td style="text-align:center">proxy</td>
-<td style="text-align:center">process.env.HTTP_PROXY</td>
-<td style="text-align:center">global http_proxy</td>
+    <td style="text-align:center">redis.enable</td>
+    <td style="text-align:center">true</td>
+    <td style="text-align:center">using redis to remove duplicate</td>
 </tr>
 <tr>
-<td style="text-align:center">user_agent</td>
-<td style="text-align:center"><code>windows chrome default, dont modify</code></td>
-<td style="text-align:center">UserAgent for download, dynamic update</td>
+    <td style="text-align:center">redis.connect</td>
+    <td style="text-align:center">{&quot;port&quot;: 6379,&quot;host&quot;: &quot;127.0.0.1&quot;}</td>
+    <td style="text-align:center">Redis connection configure.</td>
+</tr>
+<tr>
+    <td style="text-align:center">proxy</td>
+    <td style="text-align:center">process.env.HTTP_PROXY</td>
+    <td style="text-align:center">global http_proxy</td>
+</tr>
+<tr>
+    <td style="text-align:center">user_agent</td>
+    <td style="text-align:center"><code>windows chrome default, dont modify</code></td>
+    <td style="text-align:center">UserAgent for download, dynamic update</td>
 </tr>
 <tr>
 <td style="text-align:center">baseUrl</td>
@@ -159,24 +169,50 @@
 </tr>
 <tr>
 <td style="text-align:center">USER_DOMAIN_NAME</td>
-<td style="text-align:center">process.env.HWC_USER_DOMAIN_NAME</td>
-<td style="text-align:center">huaweicloud user domain name</td>
+    <td style="text-align:center">process.env.HWC_USER_DOMAIN_NAME</td>
+    <td style="text-align:center">huaweicloud user domain name</td>
 </tr>
 <tr>
-<td style="text-align:center">SCOPE_DOMAIN_NAME</td>
-<td style="text-align:center">process.env.HWC_SCOPE_DOMAIN_NAME</td>
-<td style="text-align:center">huaweicloud user scope domain name</td>
+    <td style="text-align:center">SCOPE_DOMAIN_NAME</td>
+    <td style="text-align:center">process.env.HWC_SCOPE_DOMAIN_NAME</td>
+    <td style="text-align:center">huaweicloud user scope domain name</td>
 </tr>
 </tbody>
 </table>
-<blockquote>
-<p>See: <a href="https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=IAM&amp;api=KeystoneCreateUserTokenByPassword">https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=IAM&amp;api=KeystoneCreateUserTokenByPassword</a><br>
-See: <a href="https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&amp;api=CreatePreheatingTasks">https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&amp;api=CreatePreheatingTasks</a></p>
-</blockquote>
-<h2>Docs</h2>
-<ul>
-<li>See: <a href="https://iitii.github.io/pixiv_downloader/">https://iitii.github.io/pixiv_downloader/</a></li>
-</ul></article>
+            <blockquote>
+                <p>See: <a
+                        href="https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=IAM&amp;api=KeystoneCreateUserTokenByPassword">https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=IAM&amp;api=KeystoneCreateUserTokenByPassword</a><br>
+                    See:
+                    <a href="https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&amp;api=CreatePreheatingTasks">https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?product=CDN&amp;api=CreatePreheatingTasks</a><br>
+                    Redis configure: <a href="https://github.com/NodeRedis/node-redis#options-object-properties">https://github.com/NodeRedis/node-redis#options-object-properties</a>
+                </p>
+            </blockquote>
+            <h2>Docs</h2>
+            <ul>
+                <li>See: <a
+                        href="https://iitii.github.io/pixiv_downloader/">https://iitii.github.io/pixiv_downloader/</a>
+                </li>
+            </ul>
+            <h2>Known issues</h2>
+            <ul>
+                <li>Socket hang up when committing huaweicloud preheating task.</li>
+            </ul>
+            <h2>Q&amp;A</h2>
+            <ol>
+                <li>Why does the file name look strange? Such as: <code>83876617_p0.png</code>,
+                    <code>83882514_p0.jpg</code>, <code>83875546_p1.jpg</code>. Does it have any special meaning?
+                </li>
+            </ol>
+            <ul>
+                <li>Yes, it does.</li>
+                <li>Take <code>83876617_p0.png</code> for instance, I think <code>83876617</code> is the unique id for
+                    each artwork, <code>p0</code> and <code>p1</code> is the index of each image which are in the same
+                    artworks.
+                </li>
+                <li>You can visit <code>https://www.pixiv.net/artworks/${unique_id}</code> to verify it, for example, <a
+                        href="https://www.pixiv.net/artworks/83876617">https://www.pixiv.net/artworks/83876617</a></li>
+            </ul>
+        </article>
     </section>
 
 
@@ -187,13 +223,43 @@ See: <a href="https://apiexplorer.developer.huaweicloud.com/apiexplorer/doc?prod
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#cdn_preheating">cdn_preheating</a></li><li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li><li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li><li><a href="global.html#checkUrl">checkUrl</a></li><li><a href="global.html#get_bytes">get_bytes</a></li><li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li><li><a href="global.html#getDom">getDom</a></li><li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li><li><a href="global.html#getToken">getToken</a></li><li><a href="global.html#got">got</a></li><li><a href="global.html#got_instance">got_instance</a></li><li><a href="global.html#human_net_speed">human_net_speed</a></li><li><a href="global.html#hwc_common">hwc_common</a></li><li><a href="global.html#isNil">isNil</a></li><li><a href="global.html#live_net_speed">live_net_speed</a></li><li><a href="global.html#logger">logger</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#mkdir">mkdir</a></li><li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li><li><a href="global.html#sleep">sleep</a></li><li><a href="global.html#spendTime">spendTime</a></li><li><a href="global.html#wait_for_low_traffic_usage">wait_for_low_traffic_usage</a></li><li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li><li><a href="global.html#zipDir">zipDir</a></li></ul>
+    <h2><a href="index.html">Home</a></h2>
+    <h3>Global</h3>
+    <ul>
+        <li><a href="global.html#cdn_preheating">cdn_preheating</a></li>
+        <li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li>
+        <li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li>
+        <li><a href="global.html#checkUrl">checkUrl</a></li>
+        <li><a href="global.html#get_bytes">get_bytes</a></li>
+        <li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li>
+        <li><a href="global.html#getDom">getDom</a></li>
+        <li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li>
+        <li><a href="global.html#getSet">getSet</a></li>
+        <li><a href="global.html#getToken">getToken</a></li>
+        <li><a href="global.html#got">got</a></li>
+        <li><a href="global.html#got_instance">got_instance</a></li>
+        <li><a href="global.html#human_net_speed">human_net_speed</a></li>
+        <li><a href="global.html#hwc_common">hwc_common</a></li>
+        <li><a href="global.html#isNil">isNil</a></li>
+        <li><a href="global.html#live_net_speed">live_net_speed</a></li>
+        <li><a href="global.html#logger">logger</a></li>
+        <li><a href="global.html#login">login</a></li>
+        <li><a href="global.html#mkdir">mkdir</a></li>
+        <li><a href="global.html#removePast">removePast</a></li>
+        <li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li>
+        <li><a href="global.html#sleep">sleep</a></li>
+        <li><a href="global.html#spendTime">spendTime</a></li>
+        <li><a href="global.html#wait_for_low_traffic_usage">wait_for_low_traffic_usage</a></li>
+        <li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li>
+        <li><a href="global.html#zipDir">zipDir</a></li>
+    </ul>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Mon Sep 21 2020 17:14:44 GMT+0800 (GMT+08:00)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Wed Sep 23 2020 17:27:40
+    GMT+0800 (GMT+08:00)
 </footer>
 
 <script> prettyPrint(); </script>

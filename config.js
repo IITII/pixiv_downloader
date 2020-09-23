@@ -46,6 +46,15 @@ let config = {
     // download dir, for example: ./tmp
     dir: path.resolve(__dirname, './tmp')
   },
+  redis: {
+    enable: true,
+    connect: {
+      // See: https://github.com/NodeRedis/node-redis#options-object-properties
+      "port": 6379,
+      "host": "127.0.0.1",
+      "tls": null
+    }
+  },
   // sub-proxy will replace parent proxy
   proxy: '',
   user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.105 Safari/537.36',
