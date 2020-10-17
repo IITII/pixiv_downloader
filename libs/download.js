@@ -82,10 +82,19 @@ async function downImg(imgSrc, callback) {
     .finally(callback);
 }
 
+/**
+ * Download images
+ * @param data {Array}
+ * @param IMG_TMP_DIR {String}
+ * @param useragent {String}
+ */
 async function saveImg(data,
                        IMG_TMP_DIR = config.save.currentImgSaveDir,
                        useragent = config.user_agent) {
   return await new Promise((resolve, reject) => {
+    if (data.length === 0) {
+      return resolve([]);
+    }
     User_Agent = useragent;
     let map = (() => {
       let tmpMap = new Map();

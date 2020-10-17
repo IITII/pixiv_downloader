@@ -6,7 +6,6 @@
 const got = require('got'),
   _ = require('lodash'),
   async = require('async'),
-  date = new Date(),
   // User name
   NAME = process.env.HWC_NAME,
   // User password
@@ -191,6 +190,7 @@ async function wait_for_low_traffic_usage(INTERFACE = 'eth0', break_time = 5000,
         default:
           throw new Error('Error TX_RX param!!!');
       }
+      const date = new Date();
       console.info(`[${date.getFullYear()}\
 -${date.getMonth()}\
 -${date.getDate()} \
@@ -501,10 +501,11 @@ async function waitForRefreshTaskDone(token, refreshTaskId, MAX_TRY = 10 * 6, qu
       } catch (e) {
         return reject(e);
       }
+      const date = new Date();
       console.info(`[${date.getFullYear()}\
 -${date.getMonth()}\
 -${date.getDate()} \
-${date.getHours()}:${date.getMinutes()}]: \
+${date.getHours()}:${date.getMinutes()}] \
 Waiting ${query_break / 1000}s for next query...`);
       await sleep(query_break);
     }

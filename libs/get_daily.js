@@ -18,6 +18,7 @@ const config = require('../config'),
   utils = require('./utils'),
   HttpsProxyAgent = require('https-proxy-agent'),
   PIXIV_USERNAME = config.pixiv.username,
+  redis_api = require('./redis_api.js'),
   PIXIV_PASSWORD = config.pixiv.password;
 
 let User_Agent = config.user_agent;
@@ -46,6 +47,7 @@ async function getDom(url, proxy) {
  */
 async function login(driver, username, password) {
   await driver.get('https://accounts.pixiv.net/login');
+  await utils.sleep(utils.getRandomSec(3, 10));
   await driver.wait(until.elementsLocated(By.id('LoginComponent')), 60000);
   let js = await fs.readFileSync(path.resolve(__dirname, '../dom/login.js'), {
     encoding: 'utf-8'
@@ -53,7 +55,7 @@ async function login(driver, username, password) {
   js = js.replace('username', username)
     .replace('password', password);
   await driver.executeScript(`${js}`);
-  await utils.sleep(2000);
+  await utils.sleep(utils.getRandomSec(3, 10));
 }
 
 /**
@@ -94,10 +96,12 @@ async function getDailyRankUrl(limit = 50) {
 async function getRealImgUrl(driver, imgUrl, js) {
   return await new Promise(async resolve => {
     await driver.get(imgUrl);
-    await driver.wait(until.elementLocated(By.css('div[role="presentation"] > a')), 600000)
+    await driver.wait(until.elementLocated(By.css('div[role="presentation"] > a')), 600000);
+    await utils.sleep(utils.getRandomSec(3, 10));
     await driver.findElement(By.css('div[role="presentation"] > a')).click();
-    await utils.sleep(1000);
+    await utils.sleep(utils.getRandomSec(3, 10));
     let array = await driver.executeScript(`return ${js}`);
+    await utils.sleep(utils.getRandomSec(3, 10));
     return resolve(array);
   });
 }
@@ -118,9 +122,7 @@ async function getDaily() {
       // We need remove duplicate before download new images.
       // Maybe this url had already downloaded at past.
       if (config.redis.enable) {
-        const redis_api = require('./redis_api.js');
-        rankUrls = await redis_api.removePast(rankUrls);
-        redis_api.quitRedis();
+        rankUrls = await redis_api.unique(rankUrls);
       }
       if (rankUrls.length === 0) {
         return resolve([]);
@@ -144,6 +146,13 @@ async function getDaily() {
             savePath: config.save.currentImgSaveDir + path.sep + path.basename(new URL(e).pathname)
           });
         });
+      }
+      // We need remove duplicate before download new images.
+      // Maybe this url had already downloaded at past.
+      if (config.redis.enable) {
+        // Due to pixiv's anti-spider, we will add keys into redis after all options is success.
+        await redis_api.setRedis(rankUrls);
+        redis_api.quitRedis();
       }
       // async quit, just for reduce time
       driver.quit().then(() => {

@@ -28,10 +28,10 @@ client.on('end', () => {
 
 /**
  * Remove duplicate url which was downloaded in the past
- * @param array origin array
+ * @param {Array} array origin array
  * @return {Array} removed array
  */
-async function removePast(array) {
+async function unique(array) {
   return await new Promise(async (resolve, reject) => {
     let tmp = [];
     for (let i = 0; i < array.length; i++) {
@@ -43,14 +43,14 @@ async function removePast(array) {
       // "  /    home/user/dir / file  .txt "
       // └──────┴──────────────┴──────┴─────┘
       const key = path.parse(ele).name;
-      await getSet(key)
+      await get(key)
         .then(value => {
-          if (value === 1) {
+          if (value === 0) {
             tmp.push(ele);
             logger.info(`Pushing new daily url: ${ele}...`);
           } else {
             logger.info(`Aborting duplicate daily url: ${ele}...`);
-            logger.info(`Duplicate count: ${value}`);
+            logger.info(`Duplicate count: ${value + 1}`);
           }
         })
         .catch(e => {
@@ -62,13 +62,34 @@ async function removePast(array) {
 }
 
 /**
- * get value for special key
+ * Put data to redis
+ * @param {Array} array origin array
+ * @param value {Number} defa
+ * @return {Array} removed array
+ */
+async function setRedis(array, value = 1) {
+  return await new Promise(async (resolve, reject) => {
+    for (let i = 0; i < array.length; i++) {
+      let url = array[i];
+      const key = path.parse(url).name;
+      await set(key, value)
+        .then(value => {
+          logger.debug(`Set key: ${key}, value: ${value}`);
+        })
+        .catch(e => reject(e));
+    }
+    return resolve();
+  })
+}
+
+/**
+ * Set value for special key
  * @param key pid, task "https://www.pixiv.net/artworks/84521887" for instance,
  * the key of this url is 84521887
  * @param value stepper
  * @return {Number} duplicate times
  */
-async function getSet(key, value = 1) {
+async function set(key, value = 1) {
   return await new Promise((resolve, reject) => {
     client.get(key, (err, res) => {
       if (err) {
@@ -79,13 +100,9 @@ async function getSet(key, value = 1) {
       }
       client.set(key, value, (err1, res1) => {
         if (err1) {
-          logger.error(err1);
-          return resolve(value);
+          return reject(value);
         }
         if (res1 === 'OK') {
-          logger.info(value === 1
-            ? `Added a new key: ${key}`
-            : `Increased value for key: ${key}`);
           return resolve(value);
         } else {
           return reject(`Unknown response: ${res1}`);
@@ -95,11 +112,33 @@ async function getSet(key, value = 1) {
   })
 }
 
+/**
+ * Get value for special key
+ * @param key pid, task "https://www.pixiv.net/artworks/84521887" for instance,
+ * the key of this url is 84521887
+ * @return {Number} duplicate times
+ */
+async function get(key) {
+  return await new Promise((resolve, reject) => {
+    client.get(key, (err, res) => {
+      if (err) {
+        return reject(err);
+      }
+      if (res !== null) {
+        return resolve(parseInt(res));
+      } else {
+        return resolve(0);
+      }
+    });
+  });
+}
+
 function quitRedis() {
   client.quit();
 }
 
 module.exports = {
-  removePast,
+  unique,
+  setRedis,
   quitRedis,
 }

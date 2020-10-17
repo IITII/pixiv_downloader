@@ -80,6 +80,33 @@ function mkdir(dir, cb) {
 }
 
 /**
+ *同步递归创建文件夹
+ * @param dir 文件夹目录
+ */
+function mkdirSync(dir) {
+  let paths = dir.split(path.sep);
+  let index = 1;
+
+  function next(index) {
+    //递归结束判断
+    if (index > paths.length) {
+      return;
+    }
+    let newPath = paths.slice(0, index).join(path.sep);
+    fs.access(newPath, function (err) {
+      //如果文件不存在，就创建这个文件
+      if (err) {
+        fs.mkdirSync(newPath);
+      }
+      //进入递归
+      next(index + 1);
+    })
+  }
+
+  next(index);
+}
+
+/**
  * only compress dir under given `dirname`
  * @param dirName compress dirname
  * @param zipFileName compressed filename
@@ -107,10 +134,41 @@ async function zipDir(dirName, zipFileName) {
   })
 }
 
+/**
+ * Get a random milliseconds from low to high
+ * @param low start (unit: minute)
+ * @param high end (unit: minute)
+ * @return {number} return a random milliseconds from low to high(unit: milliseconds)
+ * return 0 if high is lesser than low
+ */
+function getRandomMin(low, high) {
+  if (high <= low) {
+    return 0;
+  }
+  return Math.floor(1000 * 60 * (Math.random() * high + low));
+}
+
+/**
+ * Get a random milliseconds from low to high
+ * @param low start (unit: second)
+ * @param high end (unit: second)
+ * @return {number} return a random milliseconds from low to high(unit: milliseconds)
+ * return 0 if high is lesser than low
+ */
+function getRandomSec(low, high) {
+  if (high <= low) {
+    return 0;
+  }
+  return Math.floor(1000 * (Math.random() * high + low));
+}
+
 module.exports = {
   sleep,
   isNil,
   spendTime,
   mkdir,
   zipDir,
+  getRandomMin,
+  getRandomSec,
+  mkdirSync,
 }

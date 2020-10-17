@@ -7,19 +7,32 @@ const config = require('../config'),
   {logger} = require('../libs/logger.js'),
   {isNil,} = require('../libs/utils'),
   date = require('dayjs')().format(config.timeFormat.date);
+const hwc_api = require('../libs/hwc_api');
 
-async function cdn_task(res) {
-  // console.log(`SaveImg ${JSON.stringify(res)}`);
+/**
+ * pre-check for huaweicloud cdn
+ * @return {Boolean} true for passed, false for failed
+ */
+function preCheck() {
   if (isNil(process.env.HWC_ENABLE)) {
     logger.info(`ENV HWC_ENABLE is empty, exiting ...`);
+    return false;
+  }
+  if (process.env.HWC_ENABLE !== 'true') {
+    logger.info(`HWC_ENABLE is not 'true', disabled...`);
+    return false;
+  }
+  if (isNil(process.env.HWC_BASEURL)) {
+    logger.info(`ENV HWC_BASEURL is empty, exiting...`);
+    return false;
+  }
+}
+
+async function cdn_task(res) {
+  if (!preCheck()) {
     return;
   }
   let baseUrl = process.env.HWC_BASEURL;
-  const hwc_api = require('../libs/hwc_api');
-  if (isNil(baseUrl)) {
-    logger.info(`ENV HWC_BASEURL is empty, exiting...`);
-    return;
-  }
   if (!baseUrl.match('/$')) {
     baseUrl += '/';
   }
