@@ -52,10 +52,10 @@ client.on('end', () => {
 
 /**
  * Remove duplicate url which was downloaded in the past
- * @param array origin array
+ * @param {Array} array origin array
  * @return {Array} removed array
  */
-async function removePast(array) {
+async function unique(array) {
   return await new Promise(async (resolve, reject) => {
     let tmp = [];
     for (let i = 0; i &lt; array.length; i++) {
@@ -67,14 +67,14 @@ async function removePast(array) {
       // "  /    home/user/dir / file  .txt "
       // └──────┴──────────────┴──────┴─────┘
       const key = path.parse(ele).name;
-      await getSet(key)
+      await get(key)
         .then(value => {
-          if (value === 1) {
+          if (value === 0) {
             tmp.push(ele);
             logger.info(`Pushing new daily url: ${ele}...`);
           } else {
             logger.info(`Aborting duplicate daily url: ${ele}...`);
-            logger.info(`Duplicate count: ${value}`);
+            logger.info(`Duplicate count: ${value + 1}`);
           }
         })
         .catch(e => {
@@ -86,13 +86,34 @@ async function removePast(array) {
 }
 
 /**
- * get value for special key
+ * Put data to redis
+ * @param {Array} array origin array
+ * @param value {Number} defa
+ * @return {Array} removed array
+ */
+async function setRedis(array, value = 1) {
+  return await new Promise(async (resolve, reject) => {
+    for (let i = 0; i &lt; array.length; i++) {
+      let url = array[i];
+      const key = path.parse(url).name;
+      await set(key, value)
+        .then(value => {
+          logger.debug(`Set key: ${key}, value: ${value}`);
+        })
+        .catch(e => reject(e));
+    }
+    return resolve();
+  })
+}
+
+/**
+ * Set value for special key
  * @param key pid, task "https://www.pixiv.net/artworks/84521887" for instance,
  * the key of this url is 84521887
  * @param value stepper
  * @return {Number} duplicate times
  */
-async function getSet(key, value = 1) {
+async function set(key, value = 1) {
   return await new Promise((resolve, reject) => {
     client.get(key, (err, res) => {
       if (err) {
@@ -103,13 +124,9 @@ async function getSet(key, value = 1) {
       }
       client.set(key, value, (err1, res1) => {
         if (err1) {
-          logger.error(err1);
-          return resolve(value);
+          return reject(value);
         }
         if (res1 === 'OK') {
-          logger.info(value === 1
-            ? `Added a new key: ${key}`
-            : `Increased value for key: ${key}`);
           return resolve(value);
         } else {
           return reject(`Unknown response: ${res1}`);
@@ -119,12 +136,34 @@ async function getSet(key, value = 1) {
   })
 }
 
+/**
+ * Get value for special key
+ * @param key pid, task "https://www.pixiv.net/artworks/84521887" for instance,
+ * the key of this url is 84521887
+ * @return {Number} duplicate times
+ */
+async function get(key) {
+  return await new Promise((resolve, reject) => {
+    client.get(key, (err, res) => {
+      if (err) {
+        return reject(err);
+      }
+      if (res !== null) {
+        return resolve(parseInt(res));
+      } else {
+        return resolve(0);
+      }
+    });
+  });
+}
+
 function quitRedis() {
   client.quit();
 }
 
 module.exports = {
-  removePast,
+  unique,
+  setRedis,
   quitRedis,
 }</code></pre>
         </article>
@@ -141,11 +180,13 @@ module.exports = {
         <li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li>
         <li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li>
         <li><a href="global.html#checkUrl">checkUrl</a></li>
+        <li><a href="global.html#get">get</a></li>
         <li><a href="global.html#get_bytes">get_bytes</a></li>
         <li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li>
         <li><a href="global.html#getDom">getDom</a></li>
+        <li><a href="global.html#getRandomMin">getRandomMin</a></li>
+        <li><a href="global.html#getRandomSec">getRandomSec</a></li>
         <li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li>
-        <li><a href="global.html#getSet">getSet</a></li>
         <li><a href="global.html#getToken">getToken</a></li>
         <li><a href="global.html#got">got</a></li>
         <li><a href="global.html#got_instance">got_instance</a></li>
@@ -156,10 +197,15 @@ module.exports = {
         <li><a href="global.html#logger">logger</a></li>
         <li><a href="global.html#login">login</a></li>
         <li><a href="global.html#mkdir">mkdir</a></li>
-        <li><a href="global.html#removePast">removePast</a></li>
+        <li><a href="global.html#mkdirSync">mkdirSync</a></li>
+        <li><a href="global.html#preCheck">preCheck</a></li>
+        <li><a href="global.html#saveImg">saveImg</a></li>
+        <li><a href="global.html#set">set</a></li>
+        <li><a href="global.html#setRedis">setRedis</a></li>
         <li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li>
         <li><a href="global.html#sleep">sleep</a></li>
         <li><a href="global.html#spendTime">spendTime</a></li>
+        <li><a href="global.html#unique">unique</a></li>
         <li><a href="global.html#wait_for_low_traffic_usage">wait_for_low_traffic_usage</a></li>
         <li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li>
         <li><a href="global.html#zipDir">zipDir</a></li>
@@ -169,7 +215,7 @@ module.exports = {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Wed Sep 23 2020 17:27:40
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Oct 17 2020 20:49:18
     GMT+0800 (GMT+08:00)
 </footer>
 

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>JSDoc: Source: download.js</title>
+
+  <script src="scripts/prettify/prettify.js"></script>
+  <script src="scripts/prettify/lang-css.js"></script>
+  <!--[if lt IE 9]>
+  <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="styles/prettify-tomorrow.css" rel="stylesheet" type="text/css">
+  <link href="styles/jsdoc-default.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+<div id="main">
+
+  <h1 class="page-title">Source: download.js</h1>
+
+
+  <section>
+    <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * @author IITII
+ * @date 2020/9/19 13:06
+ */
+'use strict';
+const config = require('../config'),
+  fetch = require('node-fetch'),
+  fs = require('fs'),
+  path = require('path'),
+  util = require('util'),
+  streamPipeline = util.promisify(require('stream').pipeline),
+  async = require('async'),
+  dayjs = require('dayjs'),
+  // 引入 events 模块
+  events = require('events'),
+  // 创建 eventEmitter 对象
+  eventEmitter = new events.EventEmitter(),
+  {isNil, mkdir, spendTime, zipDir} = require('./utils'),
+  {logger} = require('./logger'),
+  HttpsProxyAgent = require('https-proxy-agent'),
+  httpProxy = config.save.proxy || config.proxy || process.env.HTTP_PROXY || null;
+
+let User_Agent = config.user_agent;
+
+async function fetchImg(url,
+                        proxy = null,
+                        referer = null,
+                        user_agent = null) {
+  return await new Promise(async (resolve, reject) => {
+    try {
+      if (isNil(proxy)) {
+        let data = await fetch(url, {
+          headers: {
+            "Referer": referer,
+            "User-Agent": user_agent || User_Agent
+          },
+          compress: true
+        });
+        if (data.ok) {
+          return resolve(data);
+        } else {
+          return reject(data);
+        }
+      } else {
+        let data = await fetch(url, {
+          agent: new HttpsProxyAgent(proxy),
+          headers: {
+            "Referer": referer,
+            "User-Agent": user_agent || User_Agent
+          },
+          compress: true
+        });
+        if (data.ok) {
+          return resolve(data);
+        } else {
+          return reject(data);
+        }
+      }
+    } catch (e) {
+      return reject(e);
+    }
+  })
+}
+
+async function downImg(imgSrc, callback) {
+  logger.info(`Downloading ${imgSrc.url}...`);
+  // Add await for callback
+  await spendTime(async () => {
+    let data = await fetchImg(imgSrc.url, httpProxy, imgSrc.origin, User_Agent);
+    if (data.ok) {
+      await streamPipeline(data.body, fs.createWriteStream(imgSrc.savePath));
+    }
+  })
+    .then(() => {
+      logger.info(`Save to ${imgSrc.savePath}`);
+    })
+    .catch(e => {
+      eventEmitter.emit('Download_Err', imgSrc);
+      logger.error(`Download error!!!`);
+      logger.error(e);
+    })
+    .finally(callback);
+}
+
+/**
+ * Download images
+ * @param data {Array}
+ * @param IMG_TMP_DIR {String}
+ * @param useragent {String}
+ */
+async function saveImg(data,
+                       IMG_TMP_DIR = config.save.currentImgSaveDir,
+                       useragent = config.user_agent) {
+  return await new Promise((resolve, reject) => {
+    if (data.length === 0) {
+      return resolve([]);
+    }
+    User_Agent = useragent;
+    let map = (() => {
+      let tmpMap = new Map();
+      data.forEach(e => {
+        tmpMap.set(e.url, e);
+      });
+      return tmpMap;
+    })();
+    // listen on Download_Err
+    eventEmitter.on('Download_Err', (imgSrc) => {
+      if (map.has(imgSrc.url)) {
+        // Remove download err object
+        if (map.delete(imgSrc.url)) {
+          logger.info('Remove from cdn map successful');
+        } else {
+          logger.error(`Remove from cdn map successful failed`);
+        }
+      } else {
+        logger.warn(`No such key ${imgSrc.url}`);
+      }
+    });
+    let preHeatingArray, date = dayjs().format(config.timeFormat.date);
+    mkdir(IMG_TMP_DIR, async () => {
+      logger.info(`Create un-exist path: ${IMG_TMP_DIR}`);
+      // LIMIT: Concurrency download limit
+      await async.mapLimit(data, config.save.limit, async (link, callback) => {
+        await downImg(link, callback);
+      })
+        .then(() => {
+          logger.info(`Download completed!!! Downloaded to ${IMG_TMP_DIR}`);
+          logger.debug(JSON.stringify(data));
+          preHeatingArray = (() => {
+            let tmp = [];
+            map.forEach(e => {
+              tmp.push(config.baseUrl
+                + date
+                + '/'
+                + path.basename(new URL(e.url).pathname)
+              )
+            });
+            return tmp;
+          })();
+        })
+        .then(() => {
+          logger.info(`Compressing files...`);
+          let zipPath = path.resolve(IMG_TMP_DIR) + '.zip';
+          zipDir(IMG_TMP_DIR, zipPath)
+            .then(() => {
+              logger.info(`Compress completed!!! Save to ${zipPath}`);
+              preHeatingArray.push(config.baseUrl + date + '.zip')
+            })
+            .catch(e => {
+              logger.error(`Compress failed!!!`);
+              logger.error(e);
+            })
+        })
+        .then(() => {
+          return resolve({
+            preHeatingArray,
+            refreshFilesArray: [config.baseUrl]
+          });
+        })
+        .catch(e => {
+          logger.error(`Unknown error!!!`);
+          return reject(e);
+        })
+    });
+  });
+}
+
+module.exports = {saveImg};</code></pre>
+    </article>
+  </section>
+
+
+</div>
+
+<nav>
+  <h2><a href="index.html">Home</a></h2>
+  <h3>Global</h3>
+  <ul>
+    <li><a href="global.html#cdn_preheating">cdn_preheating</a></li>
+    <li><a href="global.html#cdn_preheatingtasks">cdn_preheatingtasks</a></li>
+    <li><a href="global.html#cdn_refreshtasks">cdn_refreshtasks</a></li>
+    <li><a href="global.html#checkUrl">checkUrl</a></li>
+    <li><a href="global.html#get">get</a></li>
+    <li><a href="global.html#get_bytes">get_bytes</a></li>
+    <li><a href="global.html#getDailyRankUrl">getDailyRankUrl</a></li>
+    <li><a href="global.html#getDom">getDom</a></li>
+    <li><a href="global.html#getRandomMin">getRandomMin</a></li>
+    <li><a href="global.html#getRandomSec">getRandomSec</a></li>
+    <li><a href="global.html#getRealImgUrl">getRealImgUrl</a></li>
+    <li><a href="global.html#getToken">getToken</a></li>
+    <li><a href="global.html#got">got</a></li>
+    <li><a href="global.html#got_instance">got_instance</a></li>
+    <li><a href="global.html#human_net_speed">human_net_speed</a></li>
+    <li><a href="global.html#hwc_common">hwc_common</a></li>
+    <li><a href="global.html#isNil">isNil</a></li>
+    <li><a href="global.html#live_net_speed">live_net_speed</a></li>
+    <li><a href="global.html#logger">logger</a></li>
+    <li><a href="global.html#login">login</a></li>
+    <li><a href="global.html#mkdir">mkdir</a></li>
+    <li><a href="global.html#mkdirSync">mkdirSync</a></li>
+    <li><a href="global.html#preCheck">preCheck</a></li>
+    <li><a href="global.html#saveImg">saveImg</a></li>
+    <li><a href="global.html#set">set</a></li>
+    <li><a href="global.html#setRedis">setRedis</a></li>
+    <li><a href="global.html#showHistoryTaskDetails">showHistoryTaskDetails</a></li>
+    <li><a href="global.html#sleep">sleep</a></li>
+    <li><a href="global.html#spendTime">spendTime</a></li>
+    <li><a href="global.html#unique">unique</a></li>
+    <li><a href="global.html#wait_for_low_traffic_usage">wait_for_low_traffic_usage</a></li>
+    <li><a href="global.html#waitForRefreshTaskDone">waitForRefreshTaskDone</a></li>
+    <li><a href="global.html#zipDir">zipDir</a></li>
+  </ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+  Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 3.6.5</a> on Sat Oct 17 2020 20:49:18
+  GMT+0800 (GMT+08:00)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
